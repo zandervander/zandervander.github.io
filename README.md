@@ -6,5 +6,5 @@ so yeah
 -------------------------------------------------------
 
 [latest update] 
-idk i just added this readme so...
+added my minecraft mods
 
