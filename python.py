@@ -1,3 +1,4 @@
 <!DOCTYPE python>
-<
+<PYTHON>
 Rect(200,200,200,200)
+</PYTHON>
