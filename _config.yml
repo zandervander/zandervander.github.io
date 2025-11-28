@@ -1,5 +1,5 @@
 title: zv
-#baseurl: ""
-url: ""
+baseurl: "/shop"
+url: "https://zandervander.github.io"
 theme: jekyll-theme-hacker
 exclude: [vendor]
