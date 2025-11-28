@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Checkout</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        textarea { width: 100%; height: 100px; }
+        textarea { width: 500px; height: 70px; }
         button { padding: 10px 20px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h2>Checkout - Really Good Juice For Skill Stat</h2>
-    <textarea id="message" placeholder="Put Your Username Here"></textarea><br>
+    <h1>Checkout - Really Good Juice For Skill Stat</h1>
+    <h2>Costs 2 Iron</h2>
+    <textarea id="message" placeholder="Please enter your username, and cords if you want delivery. [CORDS MUST GO TO A CHEST WITH PAYMENT]"></textarea><br>
     <button onclick="sendMessage()">Send</button>
     <p id="status"></p>
 
@@ -25,7 +27,7 @@
 
             // Validate input
             if (!messageContent) {
-                statusEl.textContent = "Please enter your username.";
+                statusEl.textContent = "Please enter your username, and cords if you want delivery.";
                 statusEl.style.color = "red";
                 return;
             }
