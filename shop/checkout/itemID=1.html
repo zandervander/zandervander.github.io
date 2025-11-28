@@ -11,8 +11,9 @@
     </style>
 </head>
 <body>
-    <h2>Checkout - Best Juice For Movement Stats</h2>
-    <textarea id="message" placeholder="Put Your Username Here"></textarea><br>
+    <h1>Checkout - Best Juice For Movement Stats</h1>
+    <h2>Costs 6 Iron</h2>
+    <textarea id="message" placeholder="Please enter your username, and cords if you want delivery."></textarea><br>
     <button onclick="sendMessage()">Send</button>
     <p id="status"></p>
 
@@ -26,7 +27,7 @@
 
             // Validate input
             if (!messageContent) {
-                statusEl.textContent = "Please enter your username.";
+                statusEl.textContent = "Please enter your username, and cords if you want delivery.";
                 statusEl.style.color = "red";
                 return;
             }
