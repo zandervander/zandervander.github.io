@@ -1,4 +1,5 @@
 title: zv
+#baseurl: ""
 url: ""
 theme: jekyll-theme-hacker
 exclude: [vendor]
