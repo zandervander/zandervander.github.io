@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 500px; height: 70px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Checkout - Starf Berries</h1>
+    <h2>Costs 6 Iron For 32</h2>
+    <textarea id="message" placeholder="Please enter your username, quantity, and cords if you want delivery. [CORDS MUST GO TO A CHEST WITH PAYMENT]"></textarea><br>
+    <button onclick="sendMessage()">Send</button>
+    <p id="status"></p>
+
+    <script>
+        // Replace with your actual Discord webhook URL
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1444741498963886133/XbP6s-5f3Ggcb_bSZUU3TCpx8m8gw1YNpnztHeWGPYOX9gY1HI_vt1wiJMo4jbb7GOYT";
+
+        async function sendMessage() {
+            const messageContent = document.getElementById("message").value.trim();
+            const statusEl = document.getElementById("status");
+
+            // Validate input
+            if (!messageContent) {
+                statusEl.textContent = "Please enter your username, and cords if you want delivery.";
+                statusEl.style.color = "red";
+                return;
+            }
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content: messageContent })
+                });
+
+                if (response.ok) {
+                    statusEl.textContent = "Checkout Complete!";
+                    statusEl.style.color = "green";
+                    document.getElementById("message").value = "";
+                } else {
+                    statusEl.textContent = `Error: ${response.status} ${response.statusText}`;
+                    statusEl.style.color = "red";
+                }
+            } catch (error) {
+                statusEl.textContent = "Failed to send message.";
+                statusEl.style.color = "red";
+                console.error("Error sending message:", error);
+            }
+        }
+    </script>
+    <a href="https://zandervander.github.io/shop">Back To Shop</a>
+</body>
+</html>
