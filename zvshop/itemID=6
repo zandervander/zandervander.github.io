@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+
+<meta name="theme-color" content="#151515">
+<meta name="msapplication-navbutton-color" content="#151515">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<title>Item Info</title>
+
+
+
+  <body>
+
+    <header>
+      <div class="container">
+        <a id="a-title" href="https://zandervander.github.io/zvshop">
+          <h1>Really Good Juice For Jump Stat</h1>
+        </a>
+        <h2>4 Iron</h2>
+
+      </div>
+    </header>
+
+
+
+<h1 id="header-1">Starf berries</h1>
+
+<a href="https://zandervander.github.io/zvshop/checkout/itemID=6">Checkout</a>
+<p> </p>
+<a href="https://zandervander.github.io/zvshop">Back to shop</a>
+
+</body></html>
