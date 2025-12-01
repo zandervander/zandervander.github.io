@@ -1,28 +1,29 @@
-const express = require("express");
-const path = require("path");
-const app = express();
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IP Restricted Console</title>
+    <script>
+        // Replace with your allowed IP
+        const allowedIP = "123.45.67.89";
 
-// Replace with your actual IP address
-const allowedIP = "123.45.67.89"; // Example IPv4
-
-// Middleware to check IP
-app.use((req, res, next) => {
-    const clientIP = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
-    // Normalize IPv6-mapped IPv4 addresses
-    const normalizedIP = clientIP.replace("::ffff:", "");
-
-    if (normalizedIP === allowedIP) {
-        next();
-    } else {
-        res.status(403).send("Access Denied");
-    }
-});
-
-// Serve the console HTML file
-app.use(express.static(path.join(__dirname, "public")));
-
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+        // Fetch the user's public IP
+        fetch("https://api.ipify.org?format=json")
+            .then(response => response.json())
+            .then(data => {
+                if (data.ip !== allowedIP) {
+                    // Redirect if IP is not allowed
+                    window.location.href = "console?accessDenied=True.html";
+                }
+            })
+            .catch(err => {
+                console.error("IP check failed:", err);
+                window.location.href = "denied.html";
+            });
+    </script>
+</head>
+<body>
+    <h1>Welcome to the Console</h1>
+    <p>This content is only visible to the allowed IP.</p>
+</body>
+</html>
