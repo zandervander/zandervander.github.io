@@ -2,28 +2,101 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>IP Restricted Console</title>
+    <title>Console</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            margin: 0;
+            padding: 0;
+        }
+        #console {
+            padding: 10px;
+            height: 90vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        #input-line {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #333;
+        }
+        #prompt {
+            flex-shrink: 0;
+        }
+        #cmd {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 1em;
+            outline: none;
+            flex-grow: 1;
+        }
+    </style>
     <script>
-        // Replace with your allowed IP
+        // Replace with your actual allowed IP
         const allowedIP = "123.45.67.89";
 
-        // Fetch the user's public IP
+        // Only run IP check if not already on denied page
         fetch("https://api.ipify.org?format=json")
             .then(response => response.json())
             .then(data => {
                 if (data.ip !== allowedIP) {
-                    // Redirect if IP is not allowed
-                    window.location.href = "console?accessDenied=True.html";
+                    window.location.href = "denied.html";
                 }
             })
-            .catch(err => {
-                console.error("IP check failed:", err);
-                window.location.href = "denied.html";
+            .catch(() => {
+                window.location.href = "https://zandervander.github.io/console?accessDenied=True.html";
             });
     </script>
 </head>
 <body>
-    <h1>Welcome to the Console</h1>
-    <p>This content is only visible to the allowed IP.</p>
+
+<div id="console"></div>
+<div id="input-line">
+    <span id="prompt">user@web:~$ </span>
+    <input type="text" id="cmd" autofocus autocomplete="off">
+</div>
+
+<script>
+    const consoleDiv = document.getElementById("console");
+    const cmdInput = document.getElementById("cmd");
+    const promptText = document.getElementById("prompt").innerText;
+
+    function runCommand(command) {
+        let output = "";
+        switch (command.trim().toLowerCase()) {
+            case "help":
+                output = "Available commands:\nhelp - show this help\nclear - clear the console\ndate - show current date/time\necho [text] - repeat text";
+                break;
+            case "clear":
+                consoleDiv.innerHTML = "";
+                return;
+            case "date":
+                output = new Date().toString();
+                break;
+            default:
+                if (command.startsWith("echo ")) {
+                    output = command.slice(5);
+                } else if (command.trim() === "") {
+                    output = "";
+                } else {
+                    output = `Command not found: ${command}`;
+                }
+        }
+        consoleDiv.innerHTML += `${promptText}${command}\n${output}\n`;
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    cmdInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            runCommand(cmdInput.value);
+            cmdInput.value = "";
+        }
+    });
+</script>
+
 </body>
 </html>
