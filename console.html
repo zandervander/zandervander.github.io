@@ -40,7 +40,7 @@
         const allowedIP = "73.18.56.209";
 
         // Only run IP check if not already on denied page
-        fetch("https://api.ipify.org?format=json")
+        fetch("https://api.ipify.org")
             .then(response => response.json())
             .then(data => {
                 if (data.ip !== allowedIP) {
