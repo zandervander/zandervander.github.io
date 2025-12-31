@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #111;
+        color: #990000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .typer {
+        font-size: 2rem;
+        border-right: 3px solid #990000;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+</style>
+</head>
+<body>
+
+<div class="typer" id="typer"></div>
+
+<script>
+    // Array of texts to type
+    const texts = [
+        "Hello. Staff Member Of NYRP.",
+        "I cannot do this much longer.",
+        "Up until today, I was doing perfectly fine, but then brayden randonly makes us do a training, and then fails me for no fucking reason."
+        "This."
+        "Is."
+        "..."
+        "||| End Of Log. |||"
+    ];
+
+    let textIndex = 0; // Current text index
+    let charIndex = 0; // Current character index
+    let isDeleting = false; // Whether we are deleting text
+    const typingSpeed = 100; // Typing speed in ms
+    const deletingSpeed = 50; // Deleting speed in ms
+    const delayBetweenTexts = 1500; // Delay before typing next text
+
+    const typerElement = document.getElementById("typer");
+
+    function typeEffect() {
+        const currentText = texts[textIndex];
+        
+        if (!isDeleting) {
+            // Typing characters
+            typerElement.textContent = currentText.substring(0, charIndex + 1);
+            charIndex++;
+            
+            if (charIndex === currentText.length) {
+                // Pause before deleting
+                isDeleting = true;
+                setTimeout(typeEffect, delayBetweenTexts);
+                return;
+            }
+        } else {
+            // Deleting characters
+            typerElement.textContent = currentText.substring(0, charIndex - 1);
+            charIndex--;
+            
+            if (charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % texts.length; // Move to next text
+            }
+        }
+        
+        // Adjust speed depending on typing or deleting
+        setTimeout(typeEffect, isDeleting ? deletingSpeed : typingSpeed);
+    }
+
+    // Start typing effect
+    typeEffect();
+</script>
+
+</body>
+</html>
