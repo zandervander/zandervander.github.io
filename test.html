@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZanderVander's Details</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Poppins',sans-serif;
+  background:#121212;
+  color:#ccc;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ============================
+   WELCOME SCREEN & GRID
+   ============================ */
+.welcome-grid {
+  position: fixed; top: 0; left: 0; width:100%; height:100%;
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px);
+  animation: moveGrid 14s linear infinite;
+  z-index: 98; opacity: 0; transition: opacity 1s ease; pointer-events: none;
+}
+@keyframes moveGrid {
+  0% { background-position: 0 0; }
+  100% { background-position: 200px 200px; }
+}
+.welcome-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: black; display: flex; justify-content: center; align-items: center;
+  z-index: 100; transition: opacity 1s ease;
+}
+.welcome-msg {
+  position: absolute; color: white; text-align: center; opacity: 0;
+  transform: scale(1.1); transition: opacity 1s ease, transform 1s ease;
+  padding: 0 20px; width: 100%; max-width: 800px;
+}
+#msg-1 { font-size: 3rem; font-family: monospace; letter-spacing: 2px; }
+#msg-2 { font-size: 1.5rem; font-weight: 300; line-height: 1.6; color: #e0e0e0; }
+.visible { opacity: 1 !important; transform: scale(1) !important; }
+
+/* ============================
+   MAIN SITE STYLES
+   ============================ */
+.sidebar {
+  position:fixed; left:0; top:0; width:220px; height:100%;
+  background:#111; padding-top:30px; box-shadow:2px 0 10px rgba(0,0,0,0.6);
+  z-index:10; display:flex; flex-direction:column; align-items:center;
+  opacity:0; pointer-events:none; transition: opacity 1s ease;
+}
+.sidebar button {
+  display:block; width:90%; margin:5px 0; padding:12px;
+  background:#2c2c2c; border:none; border-radius:8px; color:#ccc;
+  font-size:1rem; cursor:pointer; text-align:left;
+  transition: all 0.3s;
+}
+.sidebar button:hover {
+  background:#444; color:white; transform: scale(1.05);
+  box-shadow: 0 0 12px #fff, 0 0 18px #fff55;
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+  width: 85%;
+  height: 1px;
+  background: #444;
+  margin: 15px 0;
+}
+
+/* Specific Button Styles */
+.discord-sidebar-btn {
+  margin-bottom: 20px !important;
+  background: #5865F2 !important;
+  color: white !important;
+  text-align: center !important;
+  justify-content: center; display: flex; gap: 8px;
+}
+.reviews-btn {
+  margin-top: auto !important;
+  background: #202225 !important;
+  border: 1px solid #444 !important;
+}
+/* License button specific style (optional) */
+.license-btn {
+  border: 1px solid #333;
+}
+
+.content {
+  margin-left:240px; padding:40px; opacity:0;
+  transition: opacity 1s ease; pointer-events:none;
+}
+#title {
+  display:none; text-align:center; color:#aaa; font-size:2.5rem;
+  margin-bottom:2rem; transition:opacity 0.5s ease;
+  font-family: 'Mestizo', sans-serif;
+}
+
+/* Package Details */
+.package-details {
+  display:none; opacity:0; max-height:80vh; overflow-y:auto;
+  background:#1f1f1f; border-radius:12px; padding:30px; margin-bottom:40px;
+  color:#ddd; transition:opacity 0.5s ease;
+}
+.back-button {
+  margin-top:20px; background-color:#333; color:#ddd; border:none;
+  padding:10px 20px; border-radius:8px; cursor:pointer;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+.back-button:hover { background-color:#444; transform: scale(1.05); }
+
+/* License Text Styles */
+.license-text p { margin-bottom: 15px; line-height: 1.6; }
+.license-text strong { color: #fff; }
+.license-list { margin-left: 20px; margin-bottom: 15px; }
+.license-list li { margin-bottom: 5px; }
+.friendly-note {
+    background: #252525; border-left: 4px solid #fff; padding: 15px; margin-top: 20px; font-style: italic; color: #bbb;
+}
+
+/* ============================
+   DISCORD & REVIEW STYLES
+   ============================ */
+.discord-pitch-text { text-align: center; margin-bottom: 25px; font-size: 1.1rem; color: #ccc; }
+.discord-embed-card {
+  background-color: #0f1012; border-radius: 12px; max-width: 400px;
+  margin: 0 auto; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; gap: 15px;
+}
+.embed-header { display: flex; align-items: center; gap: 15px; }
+.embed-logo { width: 64px; height: 64px; border-radius: 18px; overflow: hidden; background: #202225; }
+.embed-logo img { width: 100%; height: 100%; object-fit: cover; }
+.embed-info h3 { color: white; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+.verified-badge { width: 16px; height: 16px; display: inline-block; fill: #fff; }
+.join-us-btn {
+  background-color: #248046; color: white; text-decoration: none; font-weight: 600; text-align: center; padding: 12px; border-radius: 5px; transition: background-color 0.2s; display: block;
+}
+.join-us-btn:hover { background-color: #1a6334; }
+
+/* Additional Discord Stats Styles (from first script) */
+.embed-stats {
+  font-size: 0.85rem; color: #b9bbbe; display: flex; gap: 10px; margin-top: 4px;
+}
+.stat-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px;
+}
+.online-dot { background-color: #3ba55c; }
+.member-dot { background-color: #747f8d; }
+
+.review-header-title { font-size: 1.8rem; color: #fff; margin-bottom: 5px; font-weight: 500; }
+.review-subtext { font-size: 0.9rem; color: #888; margin-bottom: 30px; font-style: italic; }
+.review-card {
+    background: #2f3136; border-radius: 8px; padding: 16px; border-left: 4px solid #faa61a;
+    margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.review-user { display: flex; align-items: center; margin-bottom: 12px; }
+.review-avatar {
+    width: 40px; height: 40px; border-radius: 50%; 
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); margin-right: 12px;
+}
+.review-username { color: #fff; font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+.review-role-badge { background: #5865F2; color: white; font-size: 0.65rem; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; }
+.review-content { color: #dcddde; font-size: 0.95rem; line-height: 1.5; }
+.review-xo { color: #ffb6c1; font-weight: bold; letter-spacing: 1px; }
+
+/* Orbs */
+.orb {
+  position: fixed; width: 12px; height: 12px; background: #888; border-radius: 50%;
+  pointer-events: none; opacity: 0; z-index: 999; box-shadow: 0 0 8px #666;
+}
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Mestizo&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="welcome-grid" id="welcome-grid"></div>
+
+<div class="welcome-container" id="welcome-container">
+  <div class="welcome-msg" id="msg-1">Welcome.</div>
+  <div class="welcome-msg" id="msg-2">
+    Professional, tailored Discord setups and custom bots for<br>
+    FiveM communities and beyond.
+  </div>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <button class="license-btn" onclick="showPackage('package-license')">📜 Digital License</button>
+  
+  <div class="sidebar-divider"></div>
+
+  <button onclick="showPackage('package1')">📦 Package 1</button>
+  <button onclick="showPackage('package2')">📦 Package 2</button>
+  <button onclick="showPackage('package3')">📃 Custom Discord Bot</button>
+  <button onclick="showPackage('package4')">📃 Custom FiveM Scripts</button>
+  <button onclick="showPackage('package5')">💸 Payment Methods</button>
+  
+  <button class="reviews-btn" onclick="showPackage('package-reviews')">⭐ Reviews</button>
+
+  <button class="discord-sidebar-btn" onclick="showPackage('package-discord')">
+    🌐 My Discord Server
+  </button>
+</div>
+
+<div class="content" id="content">
+  <h1 id="title">ZanderVander's Details</h1>
+
+  <!-- LICENSE PAGE (Preserved from second script) -->
+  <div class="package-details" id="package-license">
+    <h2 style="margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:10px;">ZanderVander's Details - Digital License Agreement</h2>
+    
+    <div class="license-text">
+        <p>Effective Date: <strong>As of Sunday, August 24th, 2025</strong><br>
+        Creator: <strong>ZanderVander2</strong></p>
+        
+        <p>By using ZanderVander's Details, you agree to the following terms:</p>
+
+        <p><strong>1. License Grant</strong><br>
+        I grant you permission to use ZanderVander's Details for your personal digital purposes only. This license is limited, non-transferable, and does not give you ownership of the product.</p>
+
+        <p><strong>2. What You Cannot Do</strong><br>
+        You may not:</p>
+        <ul class="license-list">
+            <li>Copy, duplicate, or replicate any part of ZanderVander's Details</li>
+            <li>Share, sell, or give it to anyone else</li>
+            <li>Claim it as your own work</li>
+            <li>Use it for commercial purposes or profit without my permission</li>
+        </ul>
+
+        <p><strong>3. Intellectual Property</strong><br>
+        All rights, including copyrights and ownership, remain with me. You are only allowed to use the product as described in this license.</p>
+
+        <p><strong>4. Responsibility</strong><br>
+        This product is provided as-is. I am not responsible for any issues that arise from misuse or unauthorized sharing.</p>
+
+        <p><strong>5. Respect and Integrity</strong><br>
+        By using this product, you agree to respect the work and effort I put into it. Please do not distribute it or present it as your own.</p>
+
+        <p><strong>6. Updates</strong><br>
+        I may update these terms at any time. Continued use of the product means you accept any changes.</p>
+
+        <div class="friendly-note">
+            <strong>Friendly Note:</strong><br>
+            I made these Details for you to enjoy and learn from, but please keep it personal. Sharing or copying it takes away from the work I put into it.<br>
+            Respect the product, and everyone benefits.
+        </div>
+    </div>
+    
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- PACKAGE 1: Content from first script -->
+  <div class="package-details" id="package1">
+    <h2>🧰 Package 1: Discord Setup – <strong>$20</strong></h2>
+    <p><em>Perfect for new business owners, gang startups, or anyone wanting a streamlined Discord to manage their FiveM experience with ease and clarity.</em></p>
+    <ul>
+      <li>📁 Channel, Role & Category Setup</li>
+      <li>🖌️ Custom Embed Design</li>
+      <li>🤖 Bot Setup</li>
+      <li>🌐 Professional Layout</li>
+      <li>📞 Support: Included</li>
+    </ul>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- PACKAGE 2: Content from first script -->
+  <div class="package-details" id="package2">
+    <h2>🛠️ Package 2: Advanced Discord Build – <strong>$30</strong></h2>
+    <p><em>Ideal for gang startups, businesses, or server owners who want structure, automation, and active oversight.</em></p>
+    <ul>
+      <li>Everything in Package 1</li>
+      <li>🔧 Custom Ticket System</li>
+      <li>📜 Rules + Guidelines Embed</li>
+      <li>🎭 Reaction Roles / Role Menus</li>
+      <li>📝 Custom Applications</li>
+      <li>📚 Resource Channels</li>
+      <li>🔒 Staff Setup & Permissions</li>
+      <li>🤖 Bot Automation</li>
+      <li>📊 Server Analytics Bots</li>
+      <li>🖼️ Branding Integration</li>
+      <li>📞 Support: Included</li>
+    </ul>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- PACKAGE 3: Content from first script -->
+  <div class="package-details" id="package3">
+    <h2>🤖 Custom Discord Bot – <strong>$20</strong></h2>
+    <p><em>Fully custom bot tailored to your server. VPS/server required.</em></p>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- PACKAGE 4: Content from first script -->
+  <div class="package-details" id="package4">
+    <h2>🛠️ Custom Discord Bot – <strong>R$ 400+</strong></h2>
+    <p><em>Includes anything you request (extremely complex commands or backends may result in a higher price).</em></p>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- PACKAGE 5: Content from first script -->
+  <div class="package-details" id="package5">
+    <h2>💸 Payment Methods</h2>
+    <p>Robux (Main) / Steam (I have an addiction to buying random ass steam games).</p>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- REVIEWS PAGE (Preserved from second script) -->
+  <div class="package-details" id="package-reviews">
+    <h2 class="review-header-title">Reviews ♡</h2>
+    <p class="review-subtext">Your review means a lot and helps ensure the best possible service.</p>
+    <div class="review-card">
+        <div class="review-user">
+            <div class="review-avatar"></div>
+            <div class="review-meta">
+                <div class="review-username">N/A <span class="review-role-badge">Client</span></div>
+            </div>
+        </div>
+        <div class="review-content">
+            N/A<br><br>
+            N/A<br><br>
+            N/A
+        </div>
+    </div>
+    <button class="back-button" onclick="goBack()">Back</button>
+  </div>
+
+  <!-- DISCORD PACKAGE: Content and live stats from first script -->
+  <div class="package-details" id="package-discord">
+    <div class="discord-pitch-text">
+        Professional Discord setups and tailored bots for FiveM servers and other projects.<br>
+        Join us and begin your move toward a cleaner, more polished experience.
+    </div>
+
+    <div class="discord-embed-card">
+        <div class="embed-header">
+            <div class="embed-logo">
+            <img src="https://i.ibb.co/R4SVWpVf/logo.png" alt="logo" border="0">
+            </div>
+            <div class="embed-info">
+                <h3>ZanderVander's Details 
+                    <svg class="verified-badge" viewBox="0 0 512 512"><path d="M512 256c0-141.4-114.6-256-256-256S0 114.6 0 256s114.6 256 256 256 256-114.6 256-256z" fill="#fff"/><path d="m226.3 358.5-86.6-88.8 33.6-33.1 53.6 55 120-125.8 34.3 32.5z" fill="#5865F2"/></svg>
+                </h3>
+                <div class="embed-stats">
+                    <span><span class="stat-dot online-dot"></span><span id="live-online">Loading...</span> Online</span>
+                    <span><span class="stat-dot member-dot"></span><span id="live-members">9</span> Members</span>
+                </div>
+            </div>
+        </div>
+        <div style="font-size: 0.8rem; color: #72767d; margin-top: -10px;">Est. Jun 2024</div>
+        
+        <a href="https://discord.gg/gekCBbQk4r" target="_blank" class="join-us-btn">Join us here!</a>
+    </div>
+
+    <button class="back-button" onclick="goBack()" style="display:block; margin: 20px auto 0;">Back to Dashboard</button>
+  </div>
+
+</div>
+
+<script>
+/* Elements */
+const grid = document.getElementById("welcome-grid");
+const welcomeContainer = document.getElementById("welcome-container");
+const msg1 = document.getElementById("msg-1");
+const msg2 = document.getElementById("msg-2");
+
+const sidebar = document.getElementById("sidebar");
+const content = document.getElementById("content");
+const title = document.getElementById("title");
+// Package list includes all sections from second script
+const packages = ["package1","package2","package3","package4","package5","package-discord","package-reviews","package-license"];
+
+/* LIVE DISCORD STATS (From first script) */
+async function fetchDiscordStats() {
+    const serverID = '1256247963353452565'; 
+    try {
+        const response = await fetch(`https://discord.com/api/guilds/${serverID}/widget.json`);
+        const data = await response.json();
+        
+        // Update Online Count
+        if (data.presence_count) {
+            document.getElementById('live-online').innerText = data.presence_count;
+        } else {
+            document.getElementById('live-online').innerText = "5";
+        }
+    } catch (error) {
+        console.error("Could not fetch Discord stats", error);
+        document.getElementById('live-online').innerText = "5";
+    }
+}
+
+/* CINEMATIC INTRO SEQUENCE */
+window.onload = () => {
+  // Initialize Discord stats immediately
+  fetchDiscordStats();
+  // Refresh every 60 seconds
+  setInterval(fetchDiscordStats, 60000);
+  
+  grid.style.opacity = 1;
+  setTimeout(() => msg1.classList.add('visible'), 500);
+  setTimeout(() => msg1.classList.remove('visible'), 2500);
+  setTimeout(() => msg2.classList.add('visible'), 3500);
+  setTimeout(() => msg2.classList.remove('visible'), 7500);
+  setTimeout(() => {
+    welcomeContainer.style.opacity = 0;
+    grid.style.opacity = 0;
+  }, 8500);
+  setTimeout(() => {
+    welcomeContainer.style.display = 'none';
+    grid.style.display = 'none';
+    sidebar.style.opacity = 1; 
+    content.style.opacity = 1;
+    sidebar.style.pointerEvents = "auto"; 
+    content.style.pointerEvents = "auto";
+    title.style.display = 'block';
+    setTimeout(()=> title.style.opacity = 1, 50);
+  }, 9500);
+};
+
+/* Packages Logic */
+function showPackage(id){
+  packages.forEach(p => { 
+    const el = document.getElementById(p); 
+    if(el) { 
+      el.style.display = 'none'; 
+      el.style.opacity = 0; 
+    }
+  });
+  
+  const detail = document.getElementById(id);
+  if(detail) {
+    detail.style.display = 'block';
+    setTimeout(() => detail.style.opacity = 1, 50);
+  }
+}
+
+function goBack(){
+  packages.forEach(p => { 
+    const el = document.getElementById(p); 
+    if(el) { 
+      el.style.display = 'none'; 
+      el.style.opacity = 0; 
+    }
+  });
+}
+
+/* Orbs Logic */
+const orbCount = 6; 
+const orbs = [];
+for(let i = 0; i < orbCount; i++){
+  const orb = document.createElement('div'); 
+  orb.className = 'orb';
+  document.body.appendChild(orb); 
+  orbs.push({el: orb, x: 0, y: 0});
+}
+let mouse = {x: window.innerWidth/2, y: window.innerHeight/2};
+function updateMouse(x, y){ 
+  mouse.x = x; 
+  mouse.y = y; 
+  orbs.forEach(o => o.el.style.opacity = 1); 
+}
+window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
+function animateOrbs(){
+  let x = mouse.x, y = mouse.y;
+  orbs.forEach((o) => {
+    o.x += (x - o.x) * 0.15; 
+    o.y += (y - o.y) * 0.15;
+    o.el.style.left = `${o.x - 6}px`; 
+    o.el.style.top = `${o.y - 6}px`; 
+    x = o.x; 
+    y = o.y;
+  });
+  requestAnimationFrame(animateOrbs);
+}
+animateOrbs();
+</script>
+</body>
+</html>
