@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Console — Staff Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D1114;
+    --bg-elevated:#12171A;
+    --surface:#181F23;
+    --surface-hover:#1F282D;
+    --border:#2A343A;
+    --border-soft:#212A2F;
+    --text:#E7EDEF;
+    --text-dim:#93A2AA;
+    --text-faint:#5C6870;
+    --cyan:#4CB7AE;
+    --cyan-dim:rgba(76,183,174,0.14);
+    --amber:#DB8F4C;
+    --amber-dim:rgba(219,143,76,0.14);
+    --green:#71AE60;
+    --green-dim:rgba(113,174,96,0.14);
+    --red:#C15A47;
+    --red-dim:rgba(193,90,71,0.14);
+    --radius:10px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--cyan-dim);color:var(--text);}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+
+  /* ---------- shell ---------- */
+  .app-shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:216px;flex-shrink:0;background:var(--bg-elevated);
+    border-right:1px solid var(--border-soft);
+    display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{
+    padding:22px 20px 18px;border-bottom:1px solid var(--border-soft);
+  }
+  .brand-mark{
+    font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:0.02em;
+    display:flex;align-items:center;gap:8px;
+  }
+  .brand-mark .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 3px var(--cyan-dim);}
+  .brand-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);margin-top:5px;letter-spacing:0.04em;text-transform:uppercase;}
+
+  .nav{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+    color:var(--text-dim);font-size:13.5px;font-weight:500;background:transparent;border:none;text-align:left;width:100%;
+    transition:background .12s,color .12s;
+  }
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.85;}
+  .nav-item:hover{background:var(--surface);color:var(--text);}
+  .nav-item.active{background:var(--cyan-dim);color:var(--cyan);}
+  .nav-item.active svg{opacity:1;}
+  .nav-count{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);}
+  .nav-item.active .nav-count{color:var(--cyan);}
+
+  .sidebar-foot{padding:14px 20px 18px;border-top:1px solid var(--border-soft);}
+  .sync-pulse{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);}
+  .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint);}
+  .pulse-dot.ok{background:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
+  .pulse-dot.sending{background:var(--cyan);box-shadow:0 0 0 3px var(--cyan-dim);animation:pulse 1s infinite;}
+  .pulse-dot.err{background:var(--red);box-shadow:0 0 0 3px var(--red-dim);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 32px;border-bottom:1px solid var(--border-soft);
+    background:var(--bg);position:sticky;top:0;z-index:5;
+  }
+  .topbar h1{font-family:var(--font-display);font-size:20px;font-weight:600;margin:0;}
+  .topbar-sub{font-size:12.5px;color:var(--text-faint);margin-top:3px;font-family:var(--font-mono);}
+  .topbar-actions{display:flex;align-items:center;gap:10px;}
+  .menu-btn{display:none;}
+
+  .content{padding:28px 32px 60px;max-width:1180px;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;
+    font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text);
+    transition:background .12s,border-color .12s;
+  }
+  .btn:hover{background:var(--surface-hover);}
+  .btn-primary{background:var(--cyan);border-color:var(--cyan);color:#08201E;font-weight:600;}
+  .btn-primary:hover{background:#5CC5BC;}
+  .btn-danger{background:transparent;border-color:var(--red);color:var(--red);}
+  .btn-danger:hover{background:var(--red-dim);}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--text-dim);}
+  .btn-ghost:hover{background:var(--surface);color:var(--text);}
+  .btn svg{width:14px;height:14px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  /* ---------- cards / grid ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-label{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+  .stat-value{font-family:var(--font-display);font-size:26px;font-weight:600;margin-top:8px;}
+  .stat-value.amber{color:var(--amber);}
+  .stat-value.green{color:var(--green);}
+  .stat-value.cyan{color:var(--cyan);}
+
+  .panel{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);margin-bottom:20px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border-soft);}
+  .panel-head h2{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0;}
+  .panel-body{padding:16px 18px;}
+  .panel-foot{padding:12px 18px;border-top:1px solid var(--border-soft);}
+
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .section-head h2{font-family:var(--font-display);font-size:19px;font-weight:600;margin:0;}
+  .section-desc{color:var(--text-dim);font-size:13px;margin-top:4px;}
+
+  /* ---------- duty log / timeline (signature element) ---------- */
+  .duty-log{list-style:none;margin:0;padding:0;}
+  .duty-entry{
+    position:relative;padding:0 0 18px 26px;border-left:1.5px solid var(--border);margin-left:5px;
+  }
+  .duty-entry:last-child{border-color:transparent;padding-bottom:0;}
+  .duty-entry::before{
+    content:'';position:absolute;left:-6.5px;top:2px;width:11px;height:11px;border-radius:50%;
+    background:var(--bg-elevated);border:2px solid var(--text-faint);
+  }
+  .duty-entry.type-warning::before{border-color:var(--amber);}
+  .duty-entry.type-mute::before{border-color:var(--amber);}
+  .duty-entry.type-kick::before{border-color:var(--red);}
+  .duty-entry.type-ban::before{border-color:var(--red);}
+  .duty-entry.type-promotion::before{border-color:var(--green);}
+  .duty-entry.type-demotion::before{border-color:var(--red);}
+  .duty-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .duty-title{font-size:13.5px;}
+  .duty-title b{font-weight:600;}
+  .duty-time{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);white-space:nowrap;}
+  .duty-meta{font-size:12.5px;color:var(--text-dim);margin-top:3px;}
+  .duty-empty{color:var(--text-faint);font-size:13px;padding:10px 0;}
+
+  /* ---------- badges ---------- */
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;
+    font-family:var(--font-mono);font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;
+    border:1px solid transparent;
+  }
+  .badge-amber{background:var(--amber-dim);color:var(--amber);}
+  .badge-red{background:var(--red-dim);color:var(--red);}
+  .badge-green{background:var(--green-dim);color:var(--green);}
+  .badge-cyan{background:var(--cyan-dim);color:var(--cyan);}
+  .badge-dim{background:var(--border-soft);color:var(--text-faint);}
+  .chevron{font-family:var(--font-mono);color:var(--text-faint);margin-right:5px;}
+
+  /* ---------- table ---------- */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--text-faint);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;
+  }
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-hover);}
+  .cell-mono{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+  .cell-actions{display:flex;gap:6px;justify-content:flex-end;}
+  .member-name{font-weight:500;}
+  .member-id{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+
+  /* ---------- forms ---------- */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:500;color:var(--text-dim);margin-bottom:6px;}
+  .field .hint{font-size:11.5px;color:var(--text-faint);margin-top:5px;}
+  .field input[type=text], .field input[type=number], .field input[type=url], .field select, .field textarea{
+    width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);
+    padding:9px 11px;border-radius:7px;font-size:13px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--cyan);}
+  .field textarea{resize:vertical;min-height:64px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .search-bar input,.search-bar select{
+    background:var(--surface);border:1px solid var(--border-soft);color:var(--text);
+    padding:8px 12px;border-radius:8px;font-size:13px;
+  }
+  .search-bar input{flex:1;min-width:180px;}
+
+  /* toggle */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border-soft);gap:16px;}
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-label{font-weight:500;font-size:13.5px;}
+  .toggle-desc{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .switch{position:relative;width:38px;height:22px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:.15s;cursor:pointer;}
+  .slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--text-dim);border-radius:50%;transition:.15s;}
+  .switch input:checked + .slider{background:var(--cyan-dim);border:1px solid var(--cyan);}
+  .switch input:checked + .slider::before{transform:translateX(15px);background:var(--cyan);}
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(6,9,10,0.7);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;
+    animation:fadeIn .15s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .modal{
+    background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;
+    width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
+    animation:modalIn .16s ease;
+  }
+  @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border-soft);}
+  .modal-head h3{font-family:var(--font-display);font-size:16px;margin:0;font-weight:600;}
+  .modal-body{padding:20px;}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border-soft);}
+  .close-x{background:none;border:none;color:var(--text-faint);font-size:18px;line-height:1;padding:4px;}
+  .close-x:hover{color:var(--text);}
+
+  /* ---------- toast ---------- */
+  #toast-stack{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200;max-width:320px;}
+  .toast{
+    background:var(--bg-elevated);border:1px solid var(--border);border-left:3px solid var(--cyan);
+    padding:11px 14px;border-radius:8px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.35);
+    animation:toastIn .18s ease;
+  }
+  .toast.error{border-left-color:var(--red);}
+  .toast.success{border-left-color:var(--green);}
+  @keyframes toastIn{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:none;}}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--text-faint);}
+  .empty-state .glyph{font-size:26px;margin-bottom:10px;font-family:var(--font-mono);}
+  .rank-pill{
+    display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:11.5px;
+    padding:3px 9px;border-radius:6px;background:var(--border-soft);color:var(--text-dim);
+  }
+  .loading-screen{display:flex;align-items:center;justify-content:center;height:100vh;width:100%;color:var(--text-faint);font-family:var(--font-mono);font-size:13px;}
+
+  .divider-label{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:22px 0 10px;}
+
+  @media (max-width:880px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .18s;z-index:50;box-shadow:20px 0 40px rgba(0,0,0,.4);}
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:inline-flex;}
+    .topbar{padding:16px 18px;}
+    .content{padding:18px 16px 50px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .field-row{grid-template-columns:1fr;}
+    .sidebar-scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:45;}
+  }
+</style>
+</head>
+<body>
+
+<div id="root"><div class="loading-screen">initializing console…</div></div>
+<div id="toast-stack"></div>
+
+<script>
+/* ============================= ICONS ============================= */
+const ICONS = {
+  overview:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  roster:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.8 6-5.8s6 2.5 6 5.8"/><circle cx="17.5" cy="7.5" r="2.3"/><path d="M15.7 13.2c2.6.3 4.6 2.4 4.8 5"/></svg>',
+  infractions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5 21.5 20h-19L12 3.5Z"/><path d="M12 9.5v4.2"/><circle cx="12" cy="16.8" r=".9" fill="currentColor" stroke="none"/></svg>',
+  promotions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 9l9 4 9-4-9-6Z"/><path d="M3 15l9 4 9-4M3 9v6M21 9v6"/></svg>',
+  configs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h9M17 6h3M4 12h3M9 12h11M4 18h13M20 18h0"/><circle cx="14" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V10c.1.6.6 1.2 1.5 1.3h.1a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1Z"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v5h-5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
+};
+
+/* ============================= STORAGE ============================= */
+async function getJSON(key, fallback){
+  try{
+    const r = await window.storage.get(key, true);
+    return r && r.value ? JSON.parse(r.value) : fallback;
+  }catch(e){ return fallback; }
+}
+async function setJSON(key, value){
+  try{
+    const r = await window.storage.set(key, JSON.stringify(value), true);
+    if(!r) throw new Error('no result');
+    return true;
+  }catch(e){
+    toast('Save failed — check connection and try again.', 'error');
+    return false;
+  }
+}
+
+/* ============================= SEED / DEFAULTS ============================= */
+function defaultSettings(){
+  return {
+    serverName: 'Untitled Server',
+    ranks: ['Cadet','Officer','Senior Officer','Sergeant','Lieutenant','Captain','Command Staff'],
+    webhooks: { default:'', infraction:'', promotion:'', memberAction:'', config:'' },
+    dataSourceUrl: ''
+  };
+}
+function defaultConfigs(){
+  return {
+    prefix: '!',
+    welcomeMessage: {enabled:true, channel:'#welcome', message:'Welcome {user} to the server!'},
+    leaveMessage: {enabled:false, channel:'#logs', message:'{user} has left the server.'},
+    autoRole: {enabled:true, roleName:'Member'},
+    levelSystem: {enabled:false, announceChannel:'#level-ups'},
+    moderationLog: {enabled:true, channel:'#mod-log'},
+    automod: {enabled:true, filterLinks:false, filterProfanity:true}
+  };
+}
+function seedRoster(){
+  return [
+    {id:uid(), name:'rivera.k', discordId:'', rank:'Sergeant', status:'active', points:0, joined:'2025-11-02'},
+    {id:uid(), name:'okafor.t', discordId:'', rank:'Officer', status:'active', points:1, joined:'2026-01-14'},
+    {id:uid(), name:'lindqvist.m', discordId:'', rank:'Cadet', status:'active', points:0, joined:'2026-06-20'}
+  ];
+}
+function seedInfractions(){ return []; }
+function seedPromotions(){ return []; }
+
+/* ============================= STATE ============================= */
+const state = {
+  view: 'overview',
+  roster: [],
+  infractions: [],
+  promotions: [],
+  configs: null,
+  settings: null,
+  sidebarOpen: false,
+  syncStatus: 'idle', // idle | sending | ok | err
+  filters: { rosterQ:'', infractionQ:'', promotionQ:'' }
+};
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function nowISO(){ return new Date().toISOString(); }
+function fmtTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ============================= TOAST ============================= */
+function toast(msg, type='info'){
+  const stack = document.getElementById('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type==='error' ? ' error' : type==='success' ? ' success' : '');
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .2s'; el.style.opacity='0'; setTimeout(()=>el.remove(),200); }, 3800);
+}
+
+/* ============================= WEBHOOK SENDER ============================= */
+async function sendWebhook(urlKey, payload){
+  const s = state.settings;
+  const url = (s.webhooks[urlKey] || s.webhooks.default || '').trim();
+  if(!url){
+    toast('No BotGhost webhook configured for this action — add one in Settings.', 'error');
+    return {sent:false};
+  }
+  setSyncStatus('sending');
+  try{
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    setSyncStatus('ok');
+    toast('Sent to BotGhost webhook.', 'success');
+    return {sent:true};
+  }catch(e){
+    setSyncStatus('err');
+    toast('Request left the browser but the response couldn\'t be read (likely CORS) — check your BotGhost flow log to confirm it landed.', 'error');
+    return {sent:'unknown'};
+  }
+}
+function setSyncStatus(v){
+  state.syncStatus = v;
+  const dot = document.getElementById('pulse-dot');
+  if(!dot) return;
+  dot.className = 'pulse-dot' + (v==='ok' ? ' ok' : v==='sending' ? ' sending' : v==='err' ? ' err' : '');
+  const label = document.getElementById('pulse-label');
+  if(label) label.textContent = v==='sending' ? 'sending…' : v==='ok' ? 'last sync ok' : v==='err' ? 'unconfirmed' : 'idle';
+}
+
+/* ============================= DATA HELPERS ============================= */
+function memberById(id){ return state.roster.find(m=>m.id===id); }
+function rankIndex(rank){ return state.settings.ranks.indexOf(rank); }
+
+function combinedActivity(){
+  const inf = state.infractions.map(r=>({...r, kind:'infraction'}));
+  const pro = state.promotions.map(r=>({...r, kind:'promotion'}));
+  return [...inf, ...pro].sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+/* ============================= INIT ============================= */
+async function init(){
+  const [roster, infractions, promotions, configs, settings] = await Promise.all([
+    getJSON('roster', null),
+    getJSON('infractions', seedInfractions()),
+    getJSON('promotions', seedPromotions()),
+    getJSON('command-configs', null),
+    getJSON('settings', null)
+  ]);
+  state.roster = roster || seedRoster();
+  if(!roster) await setJSON('roster', state.roster);
+  state.infractions = infractions;
+  state.promotions = promotions;
+  state.configs = configs || defaultConfigs();
+  if(!configs) await setJSON('command-configs', state.configs);
+  state.settings = settings || defaultSettings();
+  if(!settings) await setJSON('settings', state.settings);
+
+  renderShell();
+}
+
+/* ============================= SHELL ============================= */
+function renderShell(){
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <div class="app-shell">
+      ${state.sidebarOpen ? '<div class="sidebar-scrim" onclick="toggleSidebar(false)"></div>' : ''}
+      <aside class="sidebar ${state.sidebarOpen?'open':''}">
+        <div class="brand">
+          <div class="brand-mark"><span class="dot"></span>${esc(state.settings.serverName)}</div>
+          <div class="brand-sub">Ops Console</div>
+        </div>
+        <nav class="nav">
+          ${navItem('overview','Overview')}
+          ${navItem('roster','Roster', state.roster.length)}
+          ${navItem('infractions','Infractions', state.infractions.length)}
+          ${navItem('promotions','Promotions', state.promotions.length)}
+          ${navItem('configs','Bot Configs')}
+          ${navItem('settings','Settings')}
+        </nav>
+        <div class="sidebar-foot">
+          <div class="sync-pulse"><span id="pulse-dot" class="pulse-dot"></span><span id="pulse-label">idle</span></div>
+        </div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-ghost menu-btn" onclick="toggleSidebar(true)">${ICONS.menu}</button>
+            <div>
+              <h1>${viewTitle()}</h1>
+              <div class="topbar-sub">${viewSub()}</div>
+            </div>
+          </div>
+          <div class="topbar-actions">${topbarActions()}</div>
+        </div>
+        <div class="content" id="content"></div>
+      </div>
+    </div>
+  `;
+  renderView();
+}
+function navItem(key,label,count){
+  const active = state.view===key ? 'active' : '';
+  return `<button class="nav-item ${active}" onclick="setView('${key}')">${ICONS[key]}<span>${label}</span>${count!==undefined?`<span class="nav-count">${count}</span>`:''}</button>`;
+}
+function viewTitle(){
+  return {overview:'Overview', roster:'Roster', infractions:'Infractions', promotions:'Promotions', configs:'Bot Configs', settings:'Settings'}[state.view];
+}
+function viewSub(){
+  return {
+    overview:'Server status and recent duty activity',
+    roster:'Manage members, ranks and moderation actions',
+    infractions:'Warnings, mutes, kicks and bans',
+    promotions:'Rank changes across the roster',
+    configs:'Toggles pushed to your BotGhost command flows',
+    settings:'Webhook endpoints and console identity'
+  }[state.view];
+}
+function topbarActions(){
+  if(state.view==='overview') return `<button class="btn" onclick="pullSync()">${ICONS.refresh}Sync Now</button>`;
+  if(state.view==='roster') return `<button class="btn btn-primary" onclick="openMemberModal()">${ICONS.plus}Add Member</button>`;
+  if(state.view==='infractions') return `<button class="btn btn-primary" onclick="openInfractionModal()">${ICONS.plus}Log Infraction</button>`;
+  if(state.view==='promotions') return `<button class="btn btn-primary" onclick="openPromotionModal()">${ICONS.plus}Log Promotion</button>`;
+  return '';
+}
+function setView(v){ state.view=v; state.sidebarOpen=false; renderShell(); }
+function toggleSidebar(v){ state.sidebarOpen=v; renderShell(); }
+
+/* ============================= ROUTER ============================= */
+function renderView(){
+  const c = document.getElementById('content');
+  if(state.view==='overview') c.innerHTML = renderOverview();
+  else if(state.view==='roster') c.innerHTML = renderRoster();
+  else if(state.view==='infractions') c.innerHTML = renderInfractions();
+  else if(state.view==='promotions') c.innerHTML = renderPromotions();
+  else if(state.view==='configs') c.innerHTML = renderConfigs();
+  else if(state.view==='settings') c.innerHTML = renderSettings();
+  setSyncStatus(state.syncStatus);
+}
+
+/* ============================= OVERVIEW ============================= */
+function renderOverview(){
+  const activeInfractions = state.infractions.filter(i=>['warning','mute'].includes(i.type)).length;
+  const recent = combinedActivity().slice(0,8);
+  const configuredWebhooks = Object.values(state.settings.webhooks).filter(Boolean).length;
+
+  return `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Roster Size</div><div class="stat-value cyan">${state.roster.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Open Infractions</div><div class="stat-value amber">${activeInfractions}</div></div>
+      <div class="stat-card"><div class="stat-label">Promotions Logged</div><div class="stat-value green">${state.promotions.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Webhooks Wired</div><div class="stat-value">${configuredWebhooks}/5</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Duty Log</h2><span class="badge badge-dim">last 8 entries</span></div>
+      <div class="panel-body">
+        ${recent.length ? `<ul class="duty-log">${recent.map(dutyEntryHTML).join('')}</ul>` : `<div class="duty-empty">No activity logged yet. Actions from Roster, Infractions and Promotions will show up here.</div>`}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Connection to BotGhost</h2></div>
+      <div class="panel-body">
+        <p style="color:var(--text-dim);font-size:13px;margin:0 0 12px;">
+          This console sends actions to Discord by POSTing to your BotGhost webhook URLs — each one triggers a flow that runs in your server (assign a role, post an embed, DM a member, etc).
+          It can't receive a live push back from Discord, so use <b>Sync Now</b> if you've pointed the data source URL (in Settings) at something readable, like a webhook flow that returns JSON.
+        </p>
+        <button class="btn" onclick="pullSync()">${ICONS.refresh}Sync Now</button>
+      </div>
+    </div>
+  `;
+}
+function dutyEntryHTML(r){
+  if(r.kind==='infraction'){
+    const label = {warning:'Warning',mute:'Mute',kick:'Kick',ban:'Ban'}[r.type] || r.type;
+    return `<li class="duty-entry type-${r.type}">
+      <div class="duty-row"><div class="duty-title"><span class="chevron">»</span><b>${esc(label)}</b> — ${esc(r.memberName)}</div><div class="duty-time">${fmtTime(r.timestamp)}</div></div>
+      <div class="duty-meta">${esc(r.reason||'No reason given')} · by ${esc(r.moderator||'unknown')}</div>
+    </li>`;
+  }
+  const dir = rankIndex(r.toRank) >= rankIndex(r.fromRank) ? 'promotion' : 'demotion';
+  return `<li class="duty-entry type-${dir}">
+    <div class="duty-row"><div class="duty-title"><span class="chevron">»</span><b>${dir==='promotion'?'Promotion':'Demotion'}</b> — ${esc(r.memberName)}</div><div class="duty-time">${fmtTime(r.timestamp)}</div></div>
+    <div class="duty-meta">${esc(r.fromRank)} → ${esc(r.toRank)} · by ${esc(r.moderator||'unknown')}</div>
+  </li>`;
+}
+
+async function pullSync(){
+  const url = (state.settings.dataSourceUrl||'').trim();
+  if(!url){ toast('No data source URL set — add one in Settings to enable pull sync.', 'error'); return; }
+  setSyncStatus('sending');
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    toast('Pulled data — review it in the console log (F12) and wire up merging as needed.', 'success');
+    console.log('Sync pull result:', data);
+    setSyncStatus('ok');
+  }catch(e){
+    setSyncStatus('err');
+    toast('Could not read from that URL — likely blocked by CORS, or it isn\'t returning JSON.', 'error');
+  }
+}
+
+/* ============================= ROSTER ============================= */
+function renderRoster(){
+  const q = state.filters.rosterQ.toLowerCase();
+  const rows = state.roster.filter(m => !q || m.name.toLowerCase().includes(q) || m.rank.toLowerCase().includes(q));
+  return `
+    <div class="search-bar">
+      <input type="text" placeholder="Search by name or rank…" value="${esc(state.filters.rosterQ)}" oninput="state.filters.rosterQ=this.value; renderView();">
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Member</th><th>Rank</th><th>Status</th><th>Points</th><th>Joined</th><th></th></tr></thead>
+          <tbody>
+            ${rows.length ? rows.map(rosterRow).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="glyph">∅</div>No members match that search.</div></td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function rosterRow(m){
+  const statusBadge = {
+    active:'<span class="badge badge-green">Active</span>',
+    warned:'<span class="badge badge-amber">Warned</span>',
+    muted:'<span class="badge badge-amber">Muted</span>',
+    kicked:'<span class="badge badge-red">Kicked</span>',
+    banned:'<span class="badge badge-red">Banned</span>'
+  }[m.status] || `<span class="badge badge-dim">${esc(m.status)}</span>`;
+  return `<tr>
+    <td><div class="member-name">${esc(m.name)}</div>${m.discordId?`<div class="member-id">${esc(m.discordId)}</div>`:''}</td>
+    <td><span class="rank-pill">${esc(m.rank)}</span></td>
+    <td>${statusBadge}</td>
+    <td class="cell-mono">${m.points||0}</td>
+    <td class="cell-mono">${esc(m.joined||'—')}</td>
+    <td>
+      <div class="cell-actions">
+        <button class="btn btn-sm" onclick="openInfractionModal('${m.id}')">Warn/Action</button>
+        <button class="btn btn-sm" onclick="openPromotionModal('${m.id}')">Promote</button>
+        <button class="btn btn-sm btn-ghost" onclick="openMemberModal('${m.id}')">Edit</button>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function openMemberModal(id){
+  const editing = id ? memberById(id) : null;
+  const ranks = state.settings.ranks;
+  showModal(`
+    <div class="modal-head"><h3>${editing?'Edit Member':'Add Member'}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Display name</label><input type="text" id="f-name" value="${editing?esc(editing.name):''}" placeholder="e.g. rivera.k"></div>
+      <div class="field"><label>Discord user ID <span style="color:var(--text-faint);">(optional — needed for BotGhost to target this user)</span></label><input type="text" id="f-discord" value="${editing?esc(editing.discordId):''}" placeholder="e.g. 482910034821"></div>
+      <div class="field-row">
+        <div class="field"><label>Rank</label><select id="f-rank">${ranks.map(r=>`<option ${editing&&editing.rank===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+        <div class="field"><label>Status</label><select id="f-status">${['active','warned','muted','kicked','banned'].map(s=>`<option ${editing&&editing.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      ${editing?`<button class="btn btn-danger" onclick="deleteMember('${editing.id}')">${ICONS.trash}Remove</button>`:''}
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMember(${editing?`'${editing.id}'`:'null'})">Save</button>
+    </div>
+  `);
+}
+async function saveMember(id){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ toast('Enter a display name.', 'error'); return; }
+  const discordId = document.getElementById('f-discord').value.trim();
+  const rank = document.getElementById('f-rank').value;
+  const status = document.getElementById('f-status').value;
+  if(id){
+    const m = memberById(id);
+    Object.assign(m, {name, discordId, rank, status});
+  } else {
+    state.roster.push({id:uid(), name, discordId, rank, status, points:0, joined:new Date().toISOString().slice(0,10)});
+  }
+  await setJSON('roster', state.roster);
+  closeModal(); renderShell();
+  toast('Roster updated.', 'success');
+}
+async function deleteMember(id){
+  state.roster = state.roster.filter(m=>m.id!==id);
+  await setJSON('roster', state.roster);
+  closeModal(); renderShell();
+  toast('Member removed.', 'success');
+}
+
+/* ============================= INFRACTIONS ============================= */
+function renderInfractions(){
+  const q = state.filters.infractionQ.toLowerCase();
+  const rows = state.infractions.filter(r=>!q || r.memberName.toLowerCase().includes(q) || r.type.includes(q))
+    .sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  return `
+    <div class="search-bar"><input type="text" placeholder="Search by member or type…" value="${esc(state.filters.infractionQ)}" oninput="state.filters.infractionQ=this.value; renderView();"></div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Member</th><th>Type</th><th>Reason</th><th>Points</th><th>Moderator</th><th>Logged</th></tr></thead>
+          <tbody>
+            ${rows.length ? rows.map(infractionRow).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="glyph">∅</div>No infractions logged yet.</div></td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function infractionRow(r){
+  const badge = {warning:'badge-amber',mute:'badge-amber',kick:'badge-red',ban:'badge-red'}[r.type] || 'badge-dim';
+  return `<tr>
+    <td class="member-name">${esc(r.memberName)}</td>
+    <td><span class="badge ${badge}">${esc(r.type)}</span></td>
+    <td>${esc(r.reason||'—')}</td>
+    <td class="cell-mono">${r.points||0}</td>
+    <td class="cell-mono">${esc(r.moderator||'—')}</td>
+    <td class="cell-mono">${fmtTime(r.timestamp)}</td>
+  </tr>`;
+}
+function openInfractionModal(memberId){
+  const opts = state.roster.map(m=>`<option value="${m.id}" ${memberId===m.id?'selected':''}>${esc(m.name)}</option>`).join('');
+  showModal(`
+    <div class="modal-head"><h3>Log Infraction</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Member</label><select id="f-member">${opts}</select></div>
+      <div class="field-row">
+        <div class="field"><label>Type</label><select id="f-type"><option value="warning">Warning</option><option value="mute">Mute</option><option value="kick">Kick</option><option value="ban">Ban</option></select></div>
+        <div class="field"><label>Points</label><input type="number" id="f-points" value="1" min="0"></div>
+      </div>
+      <div class="field"><label>Reason</label><textarea id="f-reason" placeholder="What happened…"></textarea></div>
+      <div class="field"><label>Moderator</label><input type="text" id="f-mod" placeholder="Your name/handle"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInfraction()">${ICONS.send}Log &amp; Send to Bot</button>
+    </div>
+  `);
+}
+async function saveInfraction(){
+  const memberId = document.getElementById('f-member').value;
+  const member = memberById(memberId);
+  if(!member){ toast('Add a member to the roster first.', 'error'); return; }
+  const type = document.getElementById('f-type').value;
+  const points = Number(document.getElementById('f-points').value)||0;
+  const reason = document.getElementById('f-reason').value.trim();
+  const moderator = document.getElementById('f-mod').value.trim();
+  const record = {id:uid(), memberId, memberName:member.name, type, points, reason, moderator, timestamp:nowISO()};
+  state.infractions.push(record);
+  member.points = (member.points||0) + points;
+  if(type==='warning') member.status='warned';
+  else if(type==='mute') member.status='muted';
+  else if(type==='kick') member.status='kicked';
+  else if(type==='ban') member.status='banned';
+  await setJSON('infractions', state.infractions);
+  await setJSON('roster', state.roster);
+  closeModal(); renderShell();
+  await sendWebhook('infraction', {
+    action:'infraction', type, member:member.name, discordId:member.discordId||'',
+    reason, points, moderator, serverName: state.settings.serverName, timestamp: record.timestamp
+  });
+}
+
+/* ============================= PROMOTIONS ============================= */
+function renderPromotions(){
+  const q = state.filters.promotionQ.toLowerCase();
+  const rows = state.promotions.filter(r=>!q || r.memberName.toLowerCase().includes(q)).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  return `
+    <div class="search-bar"><input type="text" placeholder="Search by member…" value="${esc(state.filters.promotionQ)}" oninput="state.filters.promotionQ=this.value; renderView();"></div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Member</th><th>From</th><th>To</th><th>Reason</th><th>Moderator</th><th>Logged</th></tr></thead>
+          <tbody>
+            ${rows.length ? rows.map(promotionRow).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="glyph">∅</div>No promotions logged yet.</div></td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function promotionRow(r){
+  const dir = rankIndex(r.toRank) >= rankIndex(r.fromRank);
+  return `<tr>
+    <td class="member-name">${esc(r.memberName)}</td>
+    <td><span class="rank-pill">${esc(r.fromRank)}</span></td>
+    <td><span class="rank-pill" style="color:${dir?'var(--green)':'var(--red)'}">${esc(r.toRank)}</span></td>
+    <td>${esc(r.reason||'—')}</td>
+    <td class="cell-mono">${esc(r.moderator||'—')}</td>
+    <td class="cell-mono">${fmtTime(r.timestamp)}</td>
+  </tr>`;
+}
+function openPromotionModal(memberId){
+  const opts = state.roster.map(m=>`<option value="${m.id}" ${memberId===m.id?'selected':''}>${esc(m.name)}</option>`).join('');
+  const ranks = state.settings.ranks;
+  showModal(`
+    <div class="modal-head"><h3>Log Promotion</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Member</label><select id="f-member" onchange="fillFromRank()">${opts}</select></div>
+      <div class="field-row">
+        <div class="field"><label>From rank</label><select id="f-from">${ranks.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>
+        <div class="field"><label>To rank</label><select id="f-to">${ranks.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label>Reason</label><textarea id="f-reason" placeholder="Why the change…"></textarea></div>
+      <div class="field"><label>Moderator</label><input type="text" id="f-mod" placeholder="Your name/handle"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePromotion()">${ICONS.send}Log &amp; Send to Bot</button>
+    </div>
+  `);
+  fillFromRank();
+}
+function fillFromRank(){
+  const memberId = document.getElementById('f-member').value;
+  const m = memberById(memberId);
+  if(m) document.getElementById('f-from').value = m.rank;
+}
+async function savePromotion(){
+  const memberId = document.getElementById('f-member').value;
+  const member = memberById(memberId);
+  if(!member){ toast('Add a member to the roster first.', 'error'); return; }
+  const fromRank = document.getElementById('f-from').value;
+  const toRank = document.getElementById('f-to').value;
+  const reason = document.getElementById('f-reason').value.trim();
+  const moderator = document.getElementById('f-mod').value.trim();
+  const record = {id:uid(), memberId, memberName:member.name, fromRank, toRank, reason, moderator, timestamp:nowISO()};
+  state.promotions.push(record);
+  member.rank = toRank;
+  await setJSON('promotions', state.promotions);
+  await setJSON('roster', state.roster);
+  closeModal(); renderShell();
+  await sendWebhook('promotion', {
+    action:'promotion', member:member.name, discordId:member.discordId||'',
+    fromRank, toRank, reason, moderator, serverName: state.settings.serverName, timestamp: record.timestamp
+  });
+}
+
+/* ============================= CONFIGS ============================= */
+function renderConfigs(){
+  const c = state.configs;
+  return `
+    <div class="panel">
+      <div class="panel-head"><h2>Command Prefix</h2></div>
+      <div class="panel-body">
+        <div class="field" style="max-width:200px;margin-bottom:0;"><input type="text" id="cfg-prefix" value="${esc(c.prefix)}" oninput="c_set('prefix', this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Welcome Message</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-welcome-enabled','Post a welcome message','New members trigger this in their join channel', c.welcomeMessage.enabled, "c_nested('welcomeMessage','enabled',this.checked)")}
+        <div class="field" style="margin-top:12px;"><label>Channel</label><input type="text" value="${esc(c.welcomeMessage.channel)}" oninput="c_nested('welcomeMessage','channel',this.value)"></div>
+        <div class="field"><label>Message</label><textarea oninput="c_nested('welcomeMessage','message',this.value)">${esc(c.welcomeMessage.message)}</textarea><div class="hint">Use {user} where the member's name should go.</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Leave Message</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-leave-enabled','Post a leave message','Logged when a member leaves', c.leaveMessage.enabled, "c_nested('leaveMessage','enabled',this.checked)")}
+        <div class="field" style="margin-top:12px;"><label>Channel</label><input type="text" value="${esc(c.leaveMessage.channel)}" oninput="c_nested('leaveMessage','channel',this.value)"></div>
+        <div class="field"><label>Message</label><textarea oninput="c_nested('leaveMessage','message',this.value)">${esc(c.leaveMessage.message)}</textarea></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Auto Role</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-autorole-enabled','Assign a role on join','Runs immediately when someone joins', c.autoRole.enabled, "c_nested('autoRole','enabled',this.checked)")}
+        <div class="field" style="margin-top:12px;"><label>Role name</label><input type="text" value="${esc(c.autoRole.roleName)}" oninput="c_nested('autoRole','roleName',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Level System</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-level-enabled','Track activity levels','Members level up from chat activity', c.levelSystem.enabled, "c_nested('levelSystem','enabled',this.checked)")}
+        <div class="field" style="margin-top:12px;"><label>Announce channel</label><input type="text" value="${esc(c.levelSystem.announceChannel)}" oninput="c_nested('levelSystem','announceChannel',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Moderation Log</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-modlog-enabled','Log moderation actions','Every infraction/promotion posts here too', c.moderationLog.enabled, "c_nested('moderationLog','enabled',this.checked)")}
+        <div class="field" style="margin-top:12px;"><label>Channel</label><input type="text" value="${esc(c.moderationLog.channel)}" oninput="c_nested('moderationLog','channel',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Automod</h2></div>
+      <div class="panel-body">
+        ${toggleRow('cfg-automod-enabled','Enable automod','Master switch for automated filtering', c.automod.enabled, "c_nested('automod','enabled',this.checked)")}
+        ${toggleRow('cfg-automod-links','Filter links','Blocks unapproved links', c.automod.filterLinks, "c_nested('automod','filterLinks',this.checked)")}
+        ${toggleRow('cfg-automod-profanity','Filter profanity','Blocks flagged language', c.automod.filterProfanity, "c_nested('automod','filterProfanity',this.checked)")}
+      </div>
+      <div class="panel-foot" style="display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="pushConfigs()">${ICONS.send}Push Config to Bot</button>
+      </div>
+    </div>
+  `;
+}
+function toggleRow(id,label,desc,checked,onchange){
+  return `<div class="toggle-row">
+    <div><div class="toggle-label">${esc(label)}</div><div class="toggle-desc">${esc(desc)}</div></div>
+    <label class="switch"><input type="checkbox" id="${id}" ${checked?'checked':''} onchange="${onchange}"><span class="slider"></span></label>
+  </div>`;
+}
+async function c_set(key, val){ state.configs[key]=val; await setJSON('command-configs', state.configs); }
+async function c_nested(group, key, val){ state.configs[group][key]=val; await setJSON('command-configs', state.configs); }
+async function pushConfigs(){
+  await sendWebhook('config', {action:'config-update', serverName: state.settings.serverName, config: state.configs, timestamp: nowISO()});
+}
+
+/* ============================= SETTINGS ============================= */
+function renderSettings(){
+  const s = state.settings;
+  return `
+    <div class="panel">
+      <div class="panel-head"><h2>Console Identity</h2></div>
+      <div class="panel-body">
+        <div class="field"><label>Server name</label><input type="text" value="${esc(s.serverName)}" onchange="s_set('serverName', this.value)"></div>
+        <div class="field"><label>Ranks, lowest to highest <span style="color:var(--text-faint);">(comma separated)</span></label>
+          <input type="text" value="${esc(s.ranks.join(', '))}" onchange="s_setRanks(this.value)">
+          <div class="hint">Used for the rank dropdowns in Roster and Promotions.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>BotGhost Webhook URLs</h2></div>
+      <div class="panel-body">
+        <p style="color:var(--text-dim);font-size:12.5px;margin:0 0 14px;">Paste the webhook URL from each BotGhost flow. Anything without its own URL falls back to the default.</p>
+        ${webhookField('default','Default (fallback)', s.webhooks.default)}
+        ${webhookField('infraction','Infractions', s.webhooks.infraction)}
+        ${webhookField('promotion','Promotions', s.webhooks.promotion)}
+        ${webhookField('memberAction','Member actions', s.webhooks.memberAction)}
+        ${webhookField('config','Config updates', s.webhooks.config)}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Data Source URL (optional)</h2></div>
+      <div class="panel-body">
+        <div class="field" style="margin-bottom:6px;"><input type="url" value="${esc(s.dataSourceUrl)}" placeholder="https://…" onchange="s_set('dataSourceUrl', this.value)"></div>
+        <div class="hint">If you set up something that can respond to a GET request with JSON (a BotGhost webhook flow that replies with data, or a small proxy in front of Discord), "Sync Now" on Overview will fetch it. Straight Discord API calls won't work here — they require a bot token, which can't live safely in a browser page.</div>
+      </div>
+    </div>
+
+    <div class="divider-label">Danger zone</div>
+    <div class="panel">
+      <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div><div class="toggle-label">Reset console data</div><div class="toggle-desc">Clears roster, infractions and promotions for everyone on this dashboard.</div></div>
+        <button class="btn btn-danger" onclick="resetAll()">${ICONS.trash}Reset all data</button>
+      </div>
+    </div>
+  `;
+}
+function webhookField(key,label,val){
+  return `<div class="field"><label>${esc(label)}</label><input type="url" value="${esc(val)}" placeholder="https://webhooks.botghost.com/…" onchange="s_setWebhook('${key}', this.value)"></div>`;
+}
+async function s_set(key,val){ state.settings[key]=val; await setJSON('settings', state.settings); renderShell(); }
+async function s_setRanks(val){
+  state.settings.ranks = val.split(',').map(r=>r.trim()).filter(Boolean);
+  await setJSON('settings', state.settings);
+  toast('Ranks updated.', 'success');
+}
+async function s_setWebhook(key,val){
+  state.settings.webhooks[key]=val.trim();
+  await setJSON('settings', state.settings);
+  toast('Webhook saved.', 'success');
+}
+async function resetAll(){
+  if(!confirm('This clears roster, infractions and promotions for the whole team. Continue?')) return;
+  state.roster = []; state.infractions = []; state.promotions = [];
+  await Promise.all([setJSON('roster',[]), setJSON('infractions',[]), setJSON('promotions',[])]);
+  renderShell();
+  toast('Console data reset.', 'success');
+}
+
+/* ============================= MODAL ============================= */
+function showModal(innerHTML){
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-overlay';
+  wrap.id = 'modal-overlay';
+  wrap.onclick = (e)=>{ if(e.target===wrap) closeModal(); };
+  wrap.innerHTML = `<div class="modal">${innerHTML}</div>`;
+  document.body.appendChild(wrap);
+}
+function closeModal(){
+  const el = document.getElementById('modal-overlay');
+  if(el) el.remove();
+}
+
+/* ============================= BOOT ============================= */
+init();
+</script>
+</body>
+</html>
