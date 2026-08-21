@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BotGhost Control Panel</title>
+    <style>
+        :root {
+            --bg-color: #0f1012;
+            --panel-bg: #18191c;
+            --card-bg: #2b2d31;
+            --accent-color: #5865f2;
+            --text-color: #f2f3f5;
+            --text-muted: #949ba4;
+            --border-color: #35363c;
+            --danger-color: #da373c;
+            --success-color: #248046;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .layout {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        header {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            #globalWebhookUrl {
+                max-width: 100% !important;
+                width: 100%;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .macro-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .macro-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .macro-btn:hover { background: #4752c4; }
+        .macro-btn:active { background: #3c45a5; }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .status-log {
+            background: #000;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 6px;
+            height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .log-success { color: #43b581; }
+        .log-error { color: #f04747; }
+        .log-info { color: #faa61a; }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        <!-- Main Top Bar -->
+        <header>
+            <div>
+                <h1 style="margin:0; font-size: 1.6rem;">🤖 BotGhost Remote Panel</h1>
+                <p style="margin:5px 0 0 0; color: var(--text-muted);">Code-locked static command layout</p>
+            </div>
+            <!-- PASTE YOUR BOTGHOST WEBHOOK ENDPOINT IN THE VALUE FIELD BELOW TO PRE-FILL IT -->
+            <input type="text" id="globalWebhookUrl" placeholder="Paste BotGhost Webhook URL here..." style="max-width: 450px;" value="">
+        </header>
+
+        <!-- Command Grid Panel -->
+        <div class="panel">
+            <h2 style="margin-top:0;">🎮 System Triggers</h2>
+            <div class="grid-buttons" id="buttonsContainer">
+                <!-- Loaded entirely via the code configuration below -->
+            </div>
+        </div>
+
+        <!-- Debug Logs -->
+        <div class="status-log" id="consoleLog">
+            <div class="log-info">[System] Dashboard Initiated. Awaiting webhook command dispatch...</div>
+        </div>
+    </div>
+
+    <script>
+        /**********************************************************************
+         * 🛠️ CODE CONFIGURATION AREA
+         * 
+         * To customize your dashboard buttons, edit this array below.
+         * 
+         * Format rules:
+         * - label:   The text displayed on the dashboard card.
+         * - subpath: Use this if you have specific routing sub-paths (or leave "").
+         * - payload: The exact JSON payload sent to BotGhost. Must be valid JSON.
+         **********************************************************************/
+        const dashboardButtons = [
+            { 
+                label: "📢 Broadcast Alert", 
+                subpath: "", 
+                payload: { "alert": "Server restart incoming!", "duration": "5 minutes" } 
+            },
+            { 
+                label: "🔒 Lockdown Chat", 
+                subpath: "", 
+                payload: { "action": "lock_channels", "scope": "public" } 
+            },
+            { 
+                label: "🎁 Start Giveaway", 
+                subpath: "", 
+                payload: { "prize": "Special Discord Role", "slots": 3 } 
+            },
+            { 
+                label: "🧹 Clear Messages", 
+                subpath: "", 
+                payload: { "purge_amount": 50 } 
+            }
+        ];
+        /**********************************************************************
+         * END CONFIGURATION AREA - DO NOT MODIFY BELOW THIS LINE
+         **********************************************************************/
+
+        // Build the buttons from the script data
+        renderButtons();
+
+        function renderButtons() {
+            const container = document.getElementById('buttonsContainer');
+            container.innerHTML = '';
+
+            dashboardButtons.forEach((btn, index) => {
+                const card = document.createElement('div');
+                card.className = 'macro-card';
+                card.innerHTML = `
+                    <div>
+                        <strong style="color: var(--text-color); font-size: 1.1rem;">${btn.label}</strong>
+                        <p style="color: var(--text-muted); font-size:0.75rem; margin: 4px 0 0 0;">Macro ID: #${index + 1}</p>
+                    </div>
+                    <button class="macro-btn" onclick="fireWebhook(${index})">Activate</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function fireWebhook(index) {
+            const baseUrl = document.getElementById('globalWebhookUrl').value.trim();
+            const btn = dashboardButtons[index];
+
+            if (!baseUrl) {
+                logToConsole("Error: Missing target Destination URL. Insert your BotGhost Webhook URL in the top header box.", "error");
+                return;
+            }
+
+            const finalUrl = baseUrl + btn.subpath;
+            logToConsole(`Sending outbound payload for: "${btn.label}"...`, "info");
+
+            try {
+                const response = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(btn.payload)
+                });
+
+                if (response.ok) {
+                    logToConsole(`Success! [Status ${response.status}] BotGhost parsed the payload for "${btn.label}".`, "success");
+                } else {
+                    logToConsole(`Warning: Server returned status code ${response.status}. Check your webhook setup.`, "error");
+                }
+            } catch (error) {
+                logToConsole(`Network Error: Request failed (${error.message}). Check your URL or console CORS rules.`, "error");
+            }
+        }
+
+        function logToConsole(message, type) {
+            const logBox = document.getElementById('consoleLog');
+            const time = new Date().toLocaleTimeString();
+            logBox.innerHTML += `<div class="log-${type}">[${time}] ${message}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
