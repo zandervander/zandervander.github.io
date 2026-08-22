@@ -1,80 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Console</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #111;
-        color: #990000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-    .typer {
-        font-size: 2rem;
-        border-right: 3px solid #990000;
-        white-space: nowrap;
-        overflow: hidden;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            overflow: hidden; 
+        }
+
+        #cutscene-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111; 
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 1s ease-in-out; 
+        }
+
+        .cutscene-content {
+            text-align: center;
+            animation: pulseText 2s infinite alternate;
+        }
+
+        .cutscene-content h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .cutscene-content p {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        #skip-btn {
+            position: absolute;
+            bottom: 40px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        #skip-btn:hover {
+            background: #fff;
+            color: #111;
+        }
+
+        @keyframes pulseText {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        
+        #main-website {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #000000; 
+        }
+    </style>
 </head>
 <body>
 
-<div class="typer" id="typer"></div>
+    
+    <div id="cutscene-overlay">
+        <div class="cutscene-content">
+            <h1>ZanderVander's Website</h1>
+            <p>Loading...</p>
+        </div>
+        // <button id="skip-btn" onclick="endCutscene()">Skip Intro</button>
+    </div>
 
-<script>
-    // Array of texts to type
-    const texts = [
-        "Welcome to my website",
-        "wow yay",
-        "[.]"
-    ];
+    <div id="main-website">
+        <div style="padding: 50px; text-align: center; color: #333;">
+            <h1>ZanderVander's Website</h1>
+            <p>Nothing here yet.</p>
+        </div>
+    </div>
 
-    let textIndex = 0; // Current text index
-    let charIndex = 0; // Current character index
-    let isDeleting = false; // Whether we are deleting text
-    const typingSpeed = 50; // Typing speed in ms
-    const deletingSpeed = 50; // Deleting speed in ms
-    const delayBetweenTexts = 1500; // Delay before typing next text
+    <script>
+        setTimeout(function() {
+            endCutscene();
+        }, 4000);
 
-    const typerElement = document.getElementById("typer");
-
-    function typeEffect() {
-        const currentText = texts[textIndex];
-        
-        if (!isDeleting) {
-            // Typing characters
-            typerElement.textContent = currentText.substring(0, charIndex + 1);
-            charIndex++;
+        function endCutscene() {
+            const overlay = document.getElementById('cutscene-overlay');
+            overlay.style.opacity = '0';
             
-            if (charIndex === currentText.length) {
-                // Pause before deleting
-                isDeleting = true;
-                setTimeout(typeEffect, delayBetweenTexts);
-                return;
-            }
-        } else {
-            // Deleting characters
-            typerElement.textContent = currentText.substring(0, charIndex - 1);
-            charIndex--;
-            
-            if (charIndex === 0) {
-                isDeleting = false;
-                textIndex = (textIndex + 1) % texts.length; // Move to next text
-            }
+            setTimeout(function() {
+                overlay.style.display = 'none';
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.overflow = 'auto';
+            }, 1000); 
         }
-        
-        // Adjust speed depending on typing or deleting
-        setTimeout(typeEffect, isDeleting ? deletingSpeed : typingSpeed);
-    }
-
-    // Start typing effect
-    typeEffect();
-</script>
-
+    </script>
 </body>
 </html>
