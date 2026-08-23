@@ -36,7 +36,19 @@
     </div>
   </aside>
 
-  <main class="flex-1 flex flex-col overflow-y-auto z-10 bg-zinc-950/10">
+  <!-- AUTH / DENIED SCREEN (shown until authorized) -->
+  <div id="auth-screen" class="flex-1 flex items-center justify-center">
+    <div class="neon-card p-8 rounded-2xl max-w-md text-center">
+      <h3 class="heading-font text-xl font-bold text-white mb-2">Staff Portal — Sign in required</h3>
+      <p class="text-sm text-zinc-400 mb-6">This portal is for staff members only. Please sign in with Discord to continue.</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="loginWithDiscord()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold">Connect Discord</button>
+      </div>
+      <p id="auth-error" class="text-sm text-red-400 mt-4 hidden"></p>
+    </div>
+  </div>
+
+  <main id="dashboard" class="flex-1 flex flex-col overflow-y-auto z-10 bg-zinc-950/10 hidden">
     <header class="h-20 border-b border-zinc-900/60 bg-zinc-950/20 backdrop-blur-xl flex items-center justify-between px-8">
       <h2 class="heading-font text-xs font-semibold tracking-[0.15em] uppercase text-zinc-400">System Interface</h2>
       <div class="flex items-center gap-3 px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
@@ -74,6 +86,10 @@
     // ==================== CONFIGURATION VARIABLES ====================
     const DISCORD_CLIENT_ID = '1540155835676889108'; // set to your client id
     const BOTGHOST_WEBHOOK_URL = 'YOUR_BOTGHOST_WEBHOOK_URL_HERE';
+
+    // Guild and role to check
+    const STAFF_GUILD_ID = '1540120402557276180';
+    const STAFF_ROLE_ID = '1540508212594348084';
     // =================================================================
 
     const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -92,12 +108,32 @@
     }
     function deleteCookie(name) { document.cookie = name + '=; Max-Age=0; path=/;'; }
 
+    function showAuthError(msg) {
+      const err = document.getElementById('auth-error');
+      const auth = document.getElementById('auth-screen');
+      const dash = document.getElementById('dashboard');
+      if (err) {
+        err.textContent = msg;
+        err.classList.remove('hidden');
+      }
+      if (dash) dash.classList.add('hidden');
+      if (auth) auth.classList.remove('hidden');
+    }
+
+    function showDashboard() {
+      const auth = document.getElementById('auth-screen');
+      const dash = document.getElementById('dashboard');
+      if (auth) auth.classList.add('hidden');
+      if (dash) dash.classList.remove('hidden');
+    }
+
     function loginWithDiscord() {
       if (!DISCORD_CLIENT_ID || DISCORD_CLIENT_ID.includes('YOUR')) {
         return alert('Please set DISCORD_CLIENT_ID in the script.');
       }
-      const scope = 'identify';
-      const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${scope}`;
+      // request guilds and membership read to attempt role checks client-side (may require special app privileges)
+      const scope = 'identify guilds guilds.members.read';
+      const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(scope)}`;
       window.location.href = authUrl;
     }
 
@@ -114,12 +150,26 @@
       }
     }
 
+    // Attempt to fetch guild member info and look for role. This endpoint generally requires a bot token or guilds.members.read scope and may fail.
+    async function fetchGuildMember(token, userId) {
+      try {
+        const res = await fetch(`https://discord.com/api/guilds/${STAFF_GUILD_ID}/members/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          // return the status so caller can decide
+          return { ok: false, status: res.status };
+        }
+        const data = await res.json();
+        return { ok: true, data };
+      } catch (e) {
+        console.error('fetchGuildMember error', e);
+        return { ok: false, status: 0 };
+      }
+    }
+
     function updateProfileUI(user) {
       const profileArea = document.getElementById('sidebar-profile');
-      const connectBtn = document.getElementById('connect-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-      const operator = document.getElementById('operator-name');
-
       const avatarUrl = user && user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}${user.avatar.startsWith('a_') ? '.gif' : '.png'}` : '';
 
       profileArea.innerHTML = `
@@ -135,8 +185,7 @@
 
       const signOut = document.getElementById('logout-button');
       if (signOut) signOut.addEventListener('click', logout);
-      if (connectBtn) connectBtn.hidden = true;
-      if (logoutBtn) logoutBtn.classList.remove('hidden');
+      const operator = document.getElementById('operator-name');
       if (operator) operator.textContent = `${user.username}#${user.discriminator}`;
     }
 
@@ -147,6 +196,9 @@
     }
 
     async function checkCallback() {
+      // Show login by default
+      showAuthError('');
+
       // 1) If token in URL fragment, consume it and save to cookie
       const fragment = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = fragment.get('access_token');
@@ -156,25 +208,87 @@
         // save token cookie for 7 days
         setCookie('discord_token', accessToken, 7);
         const profile = await fetchDiscordProfile(accessToken);
-        if (profile) {
+        if (!profile) { showAuthError('Failed to fetch Discord profile.'); return; }
+        // attempt guild member fetch
+        const member = await fetchGuildMember(accessToken, profile.id);
+        if (member.ok) {
+          const hasRole = Array.isArray(member.data.roles) && member.data.roles.includes(STAFF_ROLE_ID);
+          if (!hasRole) {
+            showAuthError('You are not a staff member and are not permitted to access the portal.');
+            // ensure cookies cleared
+            deleteCookie('discord_token');
+            deleteCookie('discord_user');
+            return;
+          }
+          // allowed
           setCookie('discord_user', JSON.stringify(profile), 7);
           userData = profile;
           updateProfileUI(profile);
+          showDashboard();
+          return;
+        } else {
+          // couldn't fetch member (likely permission issue). Fall back to checking guild membership via /users/@me/guilds
+          try {
+            const guildsRes = await fetch('https://discord.com/api/users/@me/guilds', { headers: { Authorization: `Bearer ${accessToken}` } });
+            if (!guildsRes.ok) { showAuthError('Unable to verify server membership. Access denied.'); deleteCookie('discord_token'); return; }
+            const guilds = await guildsRes.json();
+            const inGuild = Array.isArray(guilds) && guilds.some(g => g.id === STAFF_GUILD_ID);
+            if (!inGuild) {
+              showAuthError('You are not a staff member and are not permitted to access the portal.'); deleteCookie('discord_token'); return;
+            }
+            // We can't confirm role membership from client reliably. Deny access unless server-side verification available.
+            showAuthError('Unable to verify your staff role from the browser. Please use the server-side portal or contact an admin.');
+            deleteCookie('discord_token');
+            return;
+          } catch (e) {
+            console.error(e);
+            showAuthError('Verification failed.'); deleteCookie('discord_token'); return;
+          }
         }
-        return;
       }
 
       // 2) If cookie token present, use it
       const tokenFromCookie = getCookie('discord_token');
       const userCookie = getCookie('discord_user');
       if (tokenFromCookie) {
-        // prefer the stored user object if available
+        let profile = null;
         if (userCookie) {
-          try { userData = JSON.parse(userCookie); updateProfileUI(userData); } catch(e) { console.error(e); }
-        } else {
-          const profile = await fetchDiscordProfile(tokenFromCookie);
-          if (profile) { userData = profile; setCookie('discord_user', JSON.stringify(profile), 7); updateProfileUI(profile); }
+          try { profile = JSON.parse(userCookie); } catch(e) { profile = null; }
         }
+        if (!profile) {
+          profile = await fetchDiscordProfile(tokenFromCookie);
+          if (!profile) { deleteCookie('discord_token'); showAuthError('Failed to fetch profile from saved token.'); return; }
+        }
+
+        // attempt to verify guild member & role
+        const member = await fetchGuildMember(tokenFromCookie, profile.id);
+        if (member.ok) {
+          const hasRole = Array.isArray(member.data.roles) && member.data.roles.includes(STAFF_ROLE_ID);
+          if (!hasRole) {
+            showAuthError('You are not a staff member and are not permitted to access the portal.'); deleteCookie('discord_token'); deleteCookie('discord_user'); return;
+          }
+          userData = profile;
+          setCookie('discord_user', JSON.stringify(profile), 7);
+          updateProfileUI(profile);
+          showDashboard();
+          return;
+        } else {
+          // fallback to checking guild list membership
+          try {
+            const guildsRes = await fetch('https://discord.com/api/users/@me/guilds', { headers: { Authorization: `Bearer ${tokenFromCookie}` } });
+            if (!guildsRes.ok) { showAuthError('Unable to verify server membership. Access denied.'); deleteCookie('discord_token'); return; }
+            const guilds = await guildsRes.json();
+            const inGuild = Array.isArray(guilds) && guilds.some(g => g.id === STAFF_GUILD_ID);
+            if (!inGuild) { showAuthError('You are not a staff member and are not permitted to access the portal.'); deleteCookie('discord_token'); return; }
+            showAuthError('Unable to verify your staff role from the browser. Please use the server-side portal or contact an admin.'); deleteCookie('discord_token'); return;
+          } catch (e) {
+            console.error(e);
+            showAuthError('Verification failed.'); deleteCookie('discord_token'); return;
+          }
+        }
+      } else {
+        // no token, show login prompt (already visible by default)
+        return;
       }
     }
 
