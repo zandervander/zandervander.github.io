@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLSYSTEMS | Dashboard</title>
+    <script src="https://tailwindcss.com"></script>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #030303; }
+        .heading-font { font-family: 'Space Grotesk', sans-serif; }
+        .neon-card {
+            background: linear-gradient(135deg, rgba(20, 20, 25, 0.7) 0%, rgba(10, 10, 12, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05), 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+        }
+        .cool-btn {
+            position: relative;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 12px 24px -6px rgba(124, 58, 237, 0.5);
+            filter: brightness(1.1);
+        }
+        .modern-input {
+            background: rgba(5, 5, 5, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+        .modern-input:focus {
+            border-color: rgba(124, 58, 237, 0.5);
+            background: rgba(10, 10, 15, 0.8);
+            box-shadow: 0 0 20px -5px rgba(124, 58, 237, 0.15);
+        }
+        .glow-orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="text-zinc-100 flex h-screen overflow-hidden antialiased">
+    <div class="glow-orb top-0 left-0"></div>
+    <aside class="w-64 bg-zinc-950/60 border-r border-zinc-900 flex flex-col justify-between hidden md:flex backdrop-blur-xl z-10">
+        <div class="p-6">
+            <div class="flex items-center gap-3 py-2">
+                <div class="h-6 w-6 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-lg shadow-[0_0_20px_rgba(139,92,246,0.3)]"></div>
+                <h1 class="heading-font text-sm font-bold uppercase tracking-[0.25em] text-white">SLSYSTEMS | dashboard</h1>
+            </div>
+            <nav class="mt-12 space-y-1">
+                <a href="#" class="flex items-center text-xs font-semibold px-4 py-3 rounded-xl bg-zinc-900/50 text-white border border-zinc-800/50 transition-all">Overview</a>
+            </nav>
+        </div>
+        <div id="sidebar-profile" class="p-6 border-t border-zinc-900 bg-zinc-950/40">
+            <button onclick="loginWithDiscord()" class="cool-btn w-full py-3 text-white text-xs font-bold rounded-xl text-center tracking-wider uppercase">
+                Connect Discord
+            </button>
+        </div>
+    </aside>
+    <main class="flex-1 flex flex-col overflow-y-auto z-10 bg-zinc-950/10">
+        <header class="h-20 border-b border-zinc-900/60 bg-zinc-950/20 backdrop-blur-xl flex items-center justify-between px-10">
+            <h2 class="heading-font text-xs font-semibold tracking-[0.15em] uppercase text-zinc-400">System Interface</h2>
+            <div class="flex items-center gap-3 px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+                <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_#10b981] animate-pulse"></span>
+                <span class="heading-font text-[10px] font-bold tracking-widest uppercase text-emerald-400">Live API</span>
+            </div>
+        </header>
+        <div class="p-8 lg:p-12 space-y-8 max-w-3xl w-full mx-auto">
+            <div class="neon-card p-8 rounded-2xl space-y-6">
+                <div>
+                    <h3 class="heading-font text-xl font-bold tracking-tight text-white">Trigger Operational Payload</h3>
+                    <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">Execute manual webhook operations via backend script tunnel.</p>
+                </div>
+                <div class="space-y-5">
+                    <div>
+                        <label class="heading-font text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-2.5 block">Transmission Message</label>
+                        <input type="text" id="webhook-msg" value="Manual terminal dispatch event verified." class="modern-input w-full rounded-xl px-4 py-3.5 text-xs text-zinc-100 focus:outline-none font-mono">
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end">
+                    <button onclick="sendWebhook()" class="cool-btn px-6 py-3.5 text-xs font-bold rounded-xl tracking-wider uppercase">
+                        Dispatch Payload Packet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        const BACKEND_URL = 'http://localhost:3000';
+        let userData = null;
+        async function loginWithDiscord() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/auth-url`);
+                const data = await res.json();
+                window.location.href = data.url;
+            } catch (err) { alert('Backend script server offline! Run server.js first.'); }
+        }
+        async function checkCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/exchange-code`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    userData = await response.json();
+                    if (userData.id) updateProfileUI(userData);
+                } catch (err) { console.error('OAuth exchange failure:', err); }
+            }
+        }
+        function updateProfileUI(user) {
+            const profileArea = document.getElementById('sidebar-profile');
+            const avatarUrl = user.avatar ? `https://discordapp.com{user.id}/${user.avatar}.png` : 'https://discordapp.com';
+            profileArea.innerHTML = `
+                <div class="flex items-center w-full bg-zinc-900/40 border border-zinc-800/60 p-3 rounded-xl shadow-inner mb-3">
+                    <img src="${avatarUrl}" class="w-9 h-9 rounded-lg border border-zinc-800 bg-zinc-900 shadow-sm" alt="Profile">
+                    <div class="flex-1 overflow-hidden ml-3">
+                        <p class="heading-font text-xs font-bold text-zinc-100 truncate">${user.username}</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full text-center py-2 text-[10px] font-bold text-zinc-500 hover:text-zinc-300 border border-dashed border-zinc-800 rounded-lg uppercase tracking-widest transition-all">Exit Session</button>
+            `;
+        }
+        function logout() { window.location.reload(); }
+        async function sendWebhook() {
+            const message = document.getElementById('webhook-msg').value;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/trigger-action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, userData })
+                });
+                if (res.ok) alert('Payload processed and delivered safely!');
+                else alert('Server configuration tracking mismatch.');
+            } catch(e) { alert('Connection to proxy failed.'); }
+        }
+        window.onload = checkCallback;
+    </script>
+</body>
+</html>
