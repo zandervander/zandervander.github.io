@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLSYSTEMS | Dashboard</title>
+    <title>Control Terminal</title>
     <script src="https://tailwindcss.com"></script>
     <link rel="preconnect" href="https://googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
@@ -48,12 +48,14 @@
     </style>
 </head>
 <body class="text-zinc-100 flex h-screen overflow-hidden antialiased">
+    
     <div class="glow-orb top-0 left-0"></div>
+    
     <aside class="w-64 bg-zinc-950/60 border-r border-zinc-900 flex flex-col justify-between hidden md:flex backdrop-blur-xl z-10">
         <div class="p-6">
             <div class="flex items-center gap-3 py-2">
                 <div class="h-6 w-6 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-lg shadow-[0_0_20px_rgba(139,92,246,0.3)]"></div>
-                <h1 class="heading-font text-sm font-bold uppercase tracking-[0.25em] text-white">SLSYSTEMS | dashboard</h1>
+                <h1 class="heading-font text-sm font-bold uppercase tracking-[0.25em] text-white">Melonly</h1>
             </div>
             <nav class="mt-12 space-y-1">
                 <a href="#" class="flex items-center text-xs font-semibold px-4 py-3 rounded-xl bg-zinc-900/50 text-white border border-zinc-800/50 transition-all">Overview</a>
@@ -65,6 +67,7 @@
             </button>
         </div>
     </aside>
+
     <main class="flex-1 flex flex-col overflow-y-auto z-10 bg-zinc-950/10">
         <header class="h-20 border-b border-zinc-900/60 bg-zinc-950/20 backdrop-blur-xl flex items-center justify-between px-10">
             <h2 class="heading-font text-xs font-semibold tracking-[0.15em] uppercase text-zinc-400">System Interface</h2>
@@ -73,6 +76,7 @@
                 <span class="heading-font text-[10px] font-bold tracking-widest uppercase text-emerald-400">Live API</span>
             </div>
         </header>
+
         <div class="p-8 lg:p-12 space-y-8 max-w-3xl w-full mx-auto">
             <div class="neon-card p-8 rounded-2xl space-y-6">
                 <div>
@@ -93,32 +97,44 @@
             </div>
         </div>
     </main>
+
     <script>
-        const BACKEND_URL = 'http://localhost:3000';
+        // ==================== CONFIGURATION VARIABLES ====================
+        const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID_HERE';
+        const BOTGHOST_WEBHOOK_URL = 'YOUR_BOTGHOST_WEBHOOK_URL_HERE';
+        // =================================================================
+
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
         let userData = null;
-        async function loginWithDiscord() {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/auth-url`);
-                const data = await res.json();
-                window.location.href = data.url;
-            } catch (err) { alert('Backend script server offline! Run server.js first.'); }
+
+        function loginWithDiscord() {
+            if (DISCORD_CLIENT_ID.includes('YOUR_DISCORD_CLIENT')) {
+                return alert('Open this file in a text editor and fill out your variables.');
+            }
+            const scope = 'identify';
+            const authUrl = `https://discord.com{DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${scope}`;
+            window.location.href = authUrl;
         }
+
         async function checkCallback() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            if (code) {
+            const fragment = new URLSearchParams(window.location.hash.slice(1));
+            const accessToken = fragment.get('access_token');
+
+            if (accessToken) {
                 window.history.replaceState({}, document.title, window.location.pathname);
+                
                 try {
-                    const response = await fetch(`${BACKEND_URL}/api/exchange-code`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code })
+                    const response = await fetch('https://discord.com', {
+                        headers: { Authorization: `Bearer ${accessToken}` }
                     });
                     userData = await response.json();
                     if (userData.id) updateProfileUI(userData);
-                } catch (err) { console.error('OAuth exchange failure:', err); }
+                } catch (err) {
+                    console.error('Implicit profile fetch error:', err);
+                }
             }
         }
+
         function updateProfileUI(user) {
             const profileArea = document.getElementById('sidebar-profile');
             const avatarUrl = user.avatar ? `https://discordapp.com{user.id}/${user.avatar}.png` : 'https://discordapp.com';
@@ -132,18 +148,40 @@
                 <button onclick="logout()" class="w-full text-center py-2 text-[10px] font-bold text-zinc-500 hover:text-zinc-300 border border-dashed border-zinc-800 rounded-lg uppercase tracking-widest transition-all">Exit Session</button>
             `;
         }
+
         function logout() { window.location.reload(); }
+
         async function sendWebhook() {
+            if (BOTGHOST_WEBHOOK_URL.includes('YOUR_BOTGHOST_WEBHOOK')) {
+                return alert('BOTGHOST_WEBHOOK_URL variable config missing inside script.');
+            }
+
             const message = document.getElementById('webhook-msg').value;
+            const payload = {
+                content: message,
+                embeds: [{
+                    title: "Live Terminal Dispatch",
+                    color: 8128493,
+                    fields: [
+                        { name: "Operator Identity", value: userData ? `${userData.username} (<@${userData.id}>)` : "Unverified Web Session", inline: true }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
             try {
-                const res = await fetch(`${BACKEND_URL}/api/trigger-action`, {
+                const res = await fetch(BOTGHOST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, userData })
+                    body: JSON.stringify(payload)
                 });
+                
                 if (res.ok) alert('Payload processed and delivered safely!');
-                else alert('Server configuration tracking mismatch.');
-            } catch(e) { alert('Connection to proxy failed.'); }
+                else alert('Endpoint rejected client request package.');
+            } catch(e) {
+                alert('CORS network event restriction blocked transaction. Make sure your BotGhost webhook configuration permits web/browser data origins.');
+                console.error(e);
+            }
         }
         window.onload = checkCallback;
     </script>
