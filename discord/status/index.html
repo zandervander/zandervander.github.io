@@ -112,7 +112,7 @@
             <p>now get outta here</p>
 
             <!-- Rick Astley button -->
-            <button id="rickroll-btn" aria-label="Play Never Gonna Give You Up">Play "Never Gonna Give You Up"</button>
+            <button id="rickroll-btn" aria-label="Play Never Gonna Give You Up">Cool button"</button>
         </div>
     </div>
 
@@ -132,12 +132,10 @@
             }, 1000); 
         }
 
-        // Rickroll button behavior: opens the official Rick Astley video in a new tab
         document.addEventListener('DOMContentLoaded', function () {
             const btn = document.getElementById('rickroll-btn');
             if (btn) {
                 btn.addEventListener('click', function () {
-                    // Open in a new tab so the user isn't navigated away unexpectedly
                     window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener');
                 });
             }
