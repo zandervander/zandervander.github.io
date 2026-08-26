@@ -69,13 +69,27 @@
             100% { transform: scale(1.05); opacity: 1; }
         }
 
-        
         #main-website {
             width: 100%;
             height: 100%;
             overflow-y: auto;
             background-color: #000000; 
         }
+
+        /* Rickroll button style */
+        #rickroll-btn {
+            margin-top: 20px;
+            padding: 10px 18px;
+            background: #ff4757;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        #rickroll-btn:hover { transform: translateY(-2px); opacity: 0.95; }
     </style>
 </head>
 <body>
@@ -96,6 +110,12 @@
             <p>Status Page available at status.zandervander.net</p>
             <p>Discord bot developer</p>
             <p>now get outta here</p>
+
+            <!-- Rick Astley button -->
+            <button id="rickroll-btn" aria-label="Play Never Gonna Give You Up">Play "Never Gonna Give You Up"</button>
+        </div>
+    </div>
+
     <script>
         setTimeout(function() {
             endCutscene();
@@ -111,6 +131,17 @@
                 document.body.style.overflow = 'auto';
             }, 1000); 
         }
+
+        // Rickroll button behavior: opens the official Rick Astley video in a new tab
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('rickroll-btn');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    // Open in a new tab so the user isn't navigated away unexpectedly
+                    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener');
+                });
+            }
+        });
     </script>
 </body>
 </html>
