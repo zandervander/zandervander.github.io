@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #111;
+        color: #990000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .typer {
+        font-size: 2rem;
+        border-right: 3px solid #990000;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .rickroll-container {
+        position: fixed;
+        width: 300px;
+        height: 300px;
+        z-index: 1000;
+    }
+    .rickroll-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    .top-left {
+        top: 0;
+        left: 0;
+    }
+    .top-right {
+        top: 0;
+        right: 0;
+    }
+    .bottom-left {
+        bottom: 0;
+        left: 0;
+    }
+    .bottom-right {
+        bottom: 0;
+        right: 0;
+    }
+</style>
+</head>
+<body>
+
+<div class="typer" id="typer"></div>
+
+<script>
+    // Array of texts to type
+    const texts = [
+        "It doesnt matter",
+        "the man it doesnt matter",
+        "ohhh"
+    ];
+
+    let textIndex = 0; // Current text index
+    let charIndex = 0; // Current character index
+    let isDeleting = false; // Whether we are deleting text
+    const typingSpeed = 50; // Typing speed in ms
+    const deletingSpeed = 50; // Deleting speed in ms
+    const delayBetweenTexts = 1500; // Delay before typing next text
+
+    const typerElement = document.getElementById("typer");
+
+    function typeEffect() {
+        const currentText = texts[textIndex];
+        
+        if (!isDeleting) {
+            // Typing characters
+            typerElement.textContent = currentText.substring(0, charIndex + 1);
+            charIndex++;
+            
+            if (charIndex === currentText.length) {
+                // Pause before deleting
+                isDeleting = true;
+                setTimeout(typeEffect, delayBetweenTexts);
+                return;
+            }
+        } else {
+            // Deleting characters
+            typerElement.textContent = currentText.substring(0, charIndex - 1);
+            charIndex--;
+            
+            if (charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % texts.length; // Move to next text
+                
+                // Check if all texts have been cycled through once
+                if (textIndex === 0) {
+                    // All texts have been displayed, show rickrolls
+                    setTimeout(showRickrolls, delayBetweenTexts);
+                    return;
+                }
+            }
+        }
+        
+        // Adjust speed depending on typing or deleting
+        setTimeout(typeEffect, isDeleting ? deletingSpeed : typingSpeed);
+    }
+
+    function showRickrolls() {
+        // Avoid creating duplicates if already shown
+        if (document.querySelector('.rickroll-container')) return;
+
+        const rickrollUrl = 'https://www.youtube.com/embed/Cv1AXnX8DjU?autoplay=1';
+        const tileW = 300;
+        const tileH = 300;
+        const cols = Math.ceil(window.innerWidth / tileW);
+        const rows = Math.ceil(window.innerHeight / tileH);
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const container = document.createElement('div');
+                container.className = 'rickroll-container';
+                container.style.left = (x * tileW) + 'px';
+                container.style.top = (y * tileH) + 'px';
+
+                const iframe = document.createElement('iframe');
+                iframe.src = rickrollUrl;
+                iframe.allow = 'autoplay';
+
+                container.appendChild(iframe);
+                document.body.appendChild(container);
+            }
+        }
+    }
+
+    // Start typing effect
+    typeEffect();
+</script>
+
+</body>
+</html>
