@@ -57,9 +57,11 @@
 <script>
     // Array of texts to type
     const texts = [
-        "uh ill add hints here",
-        "uh its not ur mom",
-        "e"
+        "Hello",
+        "mr jollyvan",
+        "ivanchicken26",
+        "925915212551446598",
+        "December 29, 2021 at 07:56:29 PM EST"
     ];
 
     let textIndex = 0; // Current text index
@@ -108,30 +110,20 @@
     }
 
     function showRickrolls() {
-        // Avoid creating duplicates if already shown
-        if (document.querySelector('.rickroll-container')) return;
-
+        const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
         const rickrollUrl = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1';
-        const tileW = 300;
-        const tileH = 300;
-        const cols = Math.ceil(window.innerWidth / tileW);
-        const rows = Math.ceil(window.innerHeight / tileH);
-
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const container = document.createElement('div');
-                container.className = 'rickroll-container';
-                container.style.left = (x * tileW) + 'px';
-                container.style.top = (y * tileH) + 'px';
-
-                const iframe = document.createElement('iframe');
-                iframe.src = rickrollUrl;
-                iframe.allow = 'autoplay';
-
-                container.appendChild(iframe);
-                document.body.appendChild(container);
-            }
-        }
+        
+        corners.forEach(corner => {
+            const container = document.createElement('div');
+            container.className = `rickroll-container ${corner}`;
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = rickrollUrl;
+            iframe.allow = 'autoplay';
+            
+            container.appendChild(iframe);
+            document.body.appendChild(container);
+        });
     }
 
     // Start typing effect
